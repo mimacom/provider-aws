@@ -16,7 +16,7 @@ limitations under the License.
 
 package v1beta1
 
-import xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+import xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 
 // ServerSideEncryptionConfiguration specifies the default server-side-encryption configuration.
 type ServerSideEncryptionConfiguration struct {

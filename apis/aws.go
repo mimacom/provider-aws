@@ -27,7 +27,6 @@ import (
 	s3v1beta1 "github.com/crossplane-contrib/provider-aws/apis/s3/v1beta1"
 	snsv1beta1 "github.com/crossplane-contrib/provider-aws/apis/sns/v1beta1"
 	sqsv1beta1 "github.com/crossplane-contrib/provider-aws/apis/sqs/v1beta1"
-	awsv1alpha1 "github.com/crossplane-contrib/provider-aws/apis/v1alpha1"
 	awsv1beta1 "github.com/crossplane-contrib/provider-aws/apis/v1beta1"
 )
 
@@ -47,7 +46,6 @@ func init() {
 		s3v1beta1.SchemeBuilder.AddToScheme,
 		snsv1beta1.SchemeBuilder.AddToScheme,
 		sqsv1beta1.SchemeBuilder.AddToScheme,
-		awsv1alpha1.SchemeBuilder.AddToScheme,
 		awsv1beta1.SchemeBuilder.AddToScheme,
 	)
 }

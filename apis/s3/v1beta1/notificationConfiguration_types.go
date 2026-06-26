@@ -16,7 +16,7 @@ limitations under the License.
 
 package v1beta1
 
-import xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+import xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 
 // NotificationConfiguration specifies the notification configuration of the bucket.
 // If this element is empty, notifications are turned off for the bucket.

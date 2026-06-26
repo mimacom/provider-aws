@@ -4,8 +4,9 @@
 package convert
 
 import (
-	types "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"time"
+
+	types "github.com/aws/aws-sdk-go-v2/service/iam/types"
 )
 
 type ConverterImpl struct{}
