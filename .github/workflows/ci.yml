@@ -6,7 +6,16 @@ on:
       - mima
       - release-*
   pull_request: {}
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version string to use while publishing the package (e.g. v1.0.0-alpha.1)"
+        default: ''
+        required: false
+      go-version:
+        description: 'Go version to use if building needs to be done'
+        default: '1.24'
+        required: false
 
 env:
   # Common versions
@@ -272,3 +281,111 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@e46ed2cbd01164d986452f91f178727624ae40d7 # v4
+
+  publish-artifacts:
+    runs-on: ubuntu-22.04
+    needs: detect-noop
+    if: needs.detect-noop.outputs.noop != 'true' && github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Cleanup Disk
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be #v1.3.1
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+          tool-cache: true
+          large-packages: false
+          swap-storage: false
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@53851d14592bedcffcf25ea515637cff71ef929a # v3.3.0
+        with:
+          platforms: all
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@04eaa7c789c15c7207d36583e7d86cd37d837034 # v3.8.0
+        with:
+          version: ${{ env.DOCKER_BUILDX_VERSION }}
+          install: true
+
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          submodules: true
+
+      - name: Fetch History
+        run: git fetch --prune --unshallow
+
+      - name: Setup Go
+        uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+        with:
+          go-version: ${{ github.event.inputs.go-version }}
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Find the Go Build Cache
+        id: go
+        run: echo "cache=$(make go.cachedir)" >> $GITHUB_OUTPUT
+
+      - name: Cache the Go Build Cache
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        with:
+          path: ${{ steps.go.outputs.cache }}
+          key: ${{ runner.os }}-build-publish-artifacts-${{ hashFiles('**/go.sum') }}
+          restore-keys: ${{ runner.os }}-build-publish-artifacts-
+
+      - name: Cache Go Dependencies
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        with:
+          path: .work/pkg
+          key: ${{ runner.os }}-pkg-${{ hashFiles('**/go.sum') }}
+          restore-keys: ${{ runner.os }}-pkg-
+
+      - name: Vendor Dependencies
+        run: make modules.download modules.check
+
+      - name: Build Artifacts
+        run: |
+          make -j2 \
+            XPKG_REG_ORGS="ghcr.io/mimacom" \
+            XPKG_REG_ORGS_NO_PROMOTE="ghcr.io/mimacom" \
+            BRANCH_NAME="main" \
+            VERSION="${{ github.event.inputs.version }}" \
+            build.all
+        env:
+          # docker buildx doesn't load the images it builds by default; --load does.
+          BUILD_ARGS: "--load"
+
+      - name: Publish Artifacts
+        run: |
+          make -j2 \
+            XPKG_REG_ORGS="ghcr.io/mimacom" \
+            XPKG_REG_ORGS_NO_PROMOTE="ghcr.io/mimacom" \
+            BRANCH_NAME="main" \
+            VERSION="${{ github.event.inputs.version }}" \
+            publish
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3
+
+      - name: Sign OCI Package
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_SIGNING_KEY }}
+          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        run: |
+          cosign sign \
+            --key env://COSIGN_PRIVATE_KEY \
+            --tlog-upload=false \
+            --yes \
+            ghcr.io/mimacom/${{ github.event.repository.name }}:${{ github.event.inputs.version }}
+
+      - name: Attach cosign.pub to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.event.inputs.version }} release/cosign.pub \
+            --repo ${{ github.repository }} --clobber
