@@ -16,7 +16,7 @@ limitations under the License.
 
 package v1alpha1
 
-import xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+import xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 
 // CustomInstanceProfileParameters includes the custom fields of InstanceProfile.
 type CustomInstanceProfileParameters struct {

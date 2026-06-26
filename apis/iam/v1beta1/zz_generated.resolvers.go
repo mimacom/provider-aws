@@ -20,7 +20,7 @@ package v1beta1
 
 import (
 	"context"
-	reference "github.com/crossplane/crossplane-runtime/pkg/reference"
+	reference "github.com/crossplane/crossplane-runtime/v2/pkg/reference"
 	errors "github.com/pkg/errors"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -35,6 +35,7 @@ func (mg *AccessKey) ResolveReferences(ctx context.Context, c client.Reader) err
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.Username,
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.UsernameRef,
 		Selector:     mg.Spec.ForProvider.UsernameSelector,
 		To: reference.To{
@@ -61,6 +62,7 @@ func (mg *GroupPolicyAttachment) ResolveReferences(ctx context.Context, c client
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.PolicyARN,
 		Extract:      PolicyARN(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.PolicyARNRef,
 		Selector:     mg.Spec.ForProvider.PolicyARNSelector,
 		To: reference.To{
@@ -77,6 +79,7 @@ func (mg *GroupPolicyAttachment) ResolveReferences(ctx context.Context, c client
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.GroupName,
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.GroupNameRef,
 		Selector:     mg.Spec.ForProvider.GroupNameSelector,
 		To: reference.To{
@@ -103,6 +106,7 @@ func (mg *GroupUserMembership) ResolveReferences(ctx context.Context, c client.R
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.GroupName,
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.GroupNameRef,
 		Selector:     mg.Spec.ForProvider.GroupNameSelector,
 		To: reference.To{
@@ -119,6 +123,7 @@ func (mg *GroupUserMembership) ResolveReferences(ctx context.Context, c client.R
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.UserName,
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.UserNameRef,
 		Selector:     mg.Spec.ForProvider.UserNameSelector,
 		To: reference.To{
@@ -145,6 +150,7 @@ func (mg *RolePolicy) ResolveReferences(ctx context.Context, c client.Reader) er
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.RoleName,
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.RoleNameRef,
 		Selector:     mg.Spec.ForProvider.RoleNameSelector,
 		To: reference.To{
@@ -171,6 +177,7 @@ func (mg *RolePolicyAttachment) ResolveReferences(ctx context.Context, c client.
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.PolicyARN,
 		Extract:      PolicyARN(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.PolicyARNRef,
 		Selector:     mg.Spec.ForProvider.PolicyARNSelector,
 		To: reference.To{
@@ -187,6 +194,7 @@ func (mg *RolePolicyAttachment) ResolveReferences(ctx context.Context, c client.
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.RoleName,
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.RoleNameRef,
 		Selector:     mg.Spec.ForProvider.RoleNameSelector,
 		To: reference.To{
@@ -213,6 +221,7 @@ func (mg *UserPolicyAttachment) ResolveReferences(ctx context.Context, c client.
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.PolicyARN,
 		Extract:      PolicyARN(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.PolicyARNRef,
 		Selector:     mg.Spec.ForProvider.PolicyARNSelector,
 		To: reference.To{
@@ -229,6 +238,7 @@ func (mg *UserPolicyAttachment) ResolveReferences(ctx context.Context, c client.
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.UserName,
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.UserNameRef,
 		Selector:     mg.Spec.ForProvider.UserNameSelector,
 		To: reference.To{

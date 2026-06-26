@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 // Package managed provides a custom implementation of RetryingCriticalAnnotationUpdater
-// from the crossplane-runtime package managed (github.com/crossplane/crossplane-runtime/pkg/reconciler/managed/api.go)
+// from the crossplane-runtime package managed (github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed/api.go)
 // This custom implementation is currently used in all controllers to revert back to the behavior before
 // this breaking change from crossplane-runtime:v1.14.0 (https://github.com/crossplane/crossplane-runtime/pull/526)
 // See also https://github.com/crossplane-contrib/provider-aws/pull/1953 for more information
@@ -24,9 +24,9 @@ package managed
 import (
 	"context"
 
-	"github.com/crossplane/crossplane-runtime/pkg/errors"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
-	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/errors"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"

@@ -38,8 +38,8 @@ import (
 	requestv1 "github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/smithy-go/middleware"
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/go-ini/ini"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -104,13 +104,20 @@ func GetConfig(ctx context.Context, c client.Client, mg resource.Managed, region
 
 // UseProviderConfig to produce a config that can be used to authenticate to AWS.
 func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed, region string) (*aws.Config, error) { //nolint:gocyclo
+	// NOTE(mimacom): The legacy (cluster-scoped) AWS resources reference a
+	// cluster-scoped ProviderConfig. Namespaced/modern resources use
+	// UseProviderConfigNamespaced instead.
+	lmg, ok := mg.(resource.LegacyManaged)
+	if !ok {
+		return nil, errors.New("managed resource is not a legacy (cluster-scoped) managed resource")
+	}
 	pc := &v1beta1.ProviderConfig{}
-	if err := c.Get(ctx, types.NamespacedName{Name: mg.GetProviderConfigReference().Name}, pc); err != nil {
+	if err := c.Get(ctx, types.NamespacedName{Name: lmg.GetProviderConfigReference().Name}, pc); err != nil {
 		return nil, errors.Wrap(err, "cannot get referenced Provider")
 	}
 
-	t := resource.NewProviderConfigUsageTracker(c, &v1beta1.ProviderConfigUsage{})
-	if err := t.Track(ctx, mg); err != nil {
+	t := resource.NewLegacyProviderConfigUsageTracker(c, &v1beta1.ProviderConfigUsage{})
+	if err := t.Track(ctx, lmg); err != nil {
 		return nil, errors.Wrap(err, "cannot track ProviderConfig usage")
 	}
 
@@ -430,16 +437,20 @@ func UsePodServiceAccount(ctx context.Context, _ []byte, _, region string) (*aws
 // GetConfigV1 constructs an *awsv1.Config that can be used to authenticate to AWS
 // API by the AWSv1 clients.
 func GetConfigV1(ctx context.Context, c client.Client, mg resource.Managed, region string) (*session.Session, error) { //nolint:gocyclo
-	if mg.GetProviderConfigReference() == nil {
+	lmg, ok := mg.(resource.LegacyManaged)
+	if !ok {
+		return nil, errors.New("managed resource is not a legacy (cluster-scoped) managed resource")
+	}
+	if lmg.GetProviderConfigReference() == nil {
 		return nil, errors.New("providerConfigRef cannot be empty")
 	}
 	pc := &v1beta1.ProviderConfig{}
-	if err := c.Get(ctx, types.NamespacedName{Name: mg.GetProviderConfigReference().Name}, pc); err != nil {
+	if err := c.Get(ctx, types.NamespacedName{Name: lmg.GetProviderConfigReference().Name}, pc); err != nil {
 		return nil, errors.Wrap(err, "cannot get referenced ProviderConfig")
 	}
 
-	t := resource.NewProviderConfigUsageTracker(c, &v1beta1.ProviderConfigUsage{})
-	if err := t.Track(ctx, mg); err != nil {
+	t := resource.NewLegacyProviderConfigUsageTracker(c, &v1beta1.ProviderConfigUsage{})
+	if err := t.Track(ctx, lmg); err != nil {
 		return nil, errors.Wrap(err, "cannot track ProviderConfig usage")
 	}
 	switch s := pc.Spec.Credentials.Source; s { //nolint:exhaustive
