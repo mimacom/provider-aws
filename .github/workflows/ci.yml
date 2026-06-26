@@ -284,8 +284,11 @@ jobs:
 
   publish-artifacts:
     runs-on: ubuntu-22.04
-    needs: detect-noop
-    if: needs.detect-noop.outputs.noop != 'true' && github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
+    # Run only after every other job has completed successfully. GitHub implicitly
+    # requires all 'needs' jobs to succeed, so combined with the dispatch/version
+    # gate below this job is the final, conditional step of the pipeline.
+    needs: [check-diff, report-breaking-changes, lint, unit-tests, e2e-tests, codeql]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
     permissions:
       contents: write
       packages: write
