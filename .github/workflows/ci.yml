@@ -389,6 +389,19 @@ jobs:
       - name: Attach cosign.pub to GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ github.event.inputs.version }}
+          REPO: ${{ github.repository }}
         run: |
-          gh release upload ${{ github.event.inputs.version }} release/cosign.pub \
-            --repo ${{ github.repository }} --clobber
+          set -euo pipefail
+          # Create the release on first publish of a version, or attach to it if it
+          # already exists. Avoids requiring the release to be created manually before
+          # dispatching, and makes cosign.pub available via `gh release download`.
+          if gh release view "$VERSION" --repo "$REPO" >/dev/null 2>&1; then
+            gh release upload "$VERSION" release/cosign.pub --repo "$REPO" --clobber
+          else
+            gh release create "$VERSION" --repo "$REPO" \
+              --target "$GITHUB_SHA" \
+              --title "$VERSION" \
+              --notes "Automated mimacom release of provider-aws $VERSION" \
+              release/cosign.pub
+          fi
