@@ -24,9 +24,11 @@ import (
 // AccessKeyParameters define the desired state of an AWS IAM Access Key.
 type AccessKeyParameters struct {
 	// Username contains the name of the User.
+	// NOTE(mimacom): auto-resolution of the User reference was removed because
+	// User is now namespaced (iam.aws.m.crossplane.io) and this cluster-scoped
+	// resource cannot reference it cross-scope. Set userName explicitly.
 	// +optional
 	// +immutable
-	// +crossplane:generate:reference:type=User
 	Username string `json:"userName,omitempty"`
 
 	// UsernameRef references to an User to retrieve its userName

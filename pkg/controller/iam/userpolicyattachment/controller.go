@@ -31,7 +31,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1"
+	iamv1beta1m "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1m"
 	"github.com/crossplane-contrib/provider-aws/pkg/clients/iam"
 	"github.com/crossplane-contrib/provider-aws/pkg/features"
 	connectaws "github.com/crossplane-contrib/provider-aws/pkg/utils/connect/aws"
@@ -50,7 +50,7 @@ const (
 // SetupUserPolicyAttachment adds a controller that reconciles
 // UserPolicyAttachments.
 func SetupUserPolicyAttachment(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1beta1.UserPolicyAttachmentGroupKind)
+	name := managed.ControllerName(iamv1beta1m.UserPolicyAttachmentGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithCriticalAnnotationUpdater(custommanaged.NewRetryingCriticalAnnotationUpdater(mgr.GetClient())),
@@ -66,14 +66,14 @@ func SetupUserPolicyAttachment(mgr ctrl.Manager, o controller.Options) error {
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1beta1.UserPolicyAttachmentGroupVersionKind),
+		resource.ManagedKind(iamv1beta1m.UserPolicyAttachmentGroupVersionKind),
 		reconcilerOpts...)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		WithOptions(o.ForControllerRuntime()).
 		WithEventFilter(resource.DesiredStateChanged()).
-		For(&v1beta1.UserPolicyAttachment{}).
+		For(&iamv1beta1m.UserPolicyAttachment{}).
 		Complete(r)
 }
 
@@ -96,7 +96,7 @@ type external struct {
 }
 
 func (e *external) Observe(ctx context.Context, mgd resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mgd.(*v1beta1.UserPolicyAttachment)
+	cr, ok := mgd.(*iamv1beta1m.UserPolicyAttachment)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errUnexpectedObject)
 	}
@@ -122,7 +122,7 @@ func (e *external) Observe(ctx context.Context, mgd resource.Managed) (managed.E
 		}, nil
 	}
 	cr.SetConditions(xpv1.Available())
-	cr.Status.AtProvider = v1beta1.UserPolicyAttachmentObservation{
+	cr.Status.AtProvider = iamv1beta1m.UserPolicyAttachmentObservation{
 		AttachedPolicyARN: aws.ToString(attachedPolicyObject.PolicyArn),
 	}
 	return managed.ExternalObservation{
@@ -132,7 +132,7 @@ func (e *external) Observe(ctx context.Context, mgd resource.Managed) (managed.E
 }
 
 func (e *external) Create(ctx context.Context, mgd resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mgd.(*v1beta1.UserPolicyAttachment)
+	cr, ok := mgd.(*iamv1beta1m.UserPolicyAttachment)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errUnexpectedObject)
 	}
@@ -153,7 +153,7 @@ func (e *external) Update(_ context.Context, _ resource.Managed) (managed.Extern
 }
 
 func (e *external) Delete(ctx context.Context, mgd resource.Managed) (managed.ExternalDelete, error) {
-	cr, ok := mgd.(*v1beta1.UserPolicyAttachment)
+	cr, ok := mgd.(*iamv1beta1m.UserPolicyAttachment)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errUnexpectedObject)
 	}

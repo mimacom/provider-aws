@@ -27,9 +27,10 @@ type RolePolicyAttachmentParameters struct {
 
 	// PolicyARN is the Amazon Resource Name (ARN) of the IAM policy you want to
 	// attach.
+	// NOTE(mimacom): auto-resolution of the Policy reference was removed because
+	// Policy is now namespaced (iam.aws.m.crossplane.io) and this cluster-scoped
+	// resource cannot reference it cross-scope. Set policyArn explicitly.
 	// +immutable
-	// +crossplane:generate:reference:type=Policy
-	// +crossplane:generate:reference:extractor=PolicyARN()
 	PolicyARN string `json:"policyArn,omitempty"`
 
 	// PolicyARNRef references a Policy to retrieve its Policy ARN.

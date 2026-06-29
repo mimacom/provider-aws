@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v1beta1m
 
 import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -33,12 +34,12 @@ type UserPolicyAttachmentParameters struct {
 
 	// PolicyARNRef references a Policy to retrieve its Policy ARN.
 	// +optional
-	PolicyARNRef *xpv1.Reference `json:"policyArnRef,omitempty"`
+	PolicyARNRef *xpv1.NamespacedReference `json:"policyArnRef,omitempty"`
 
 	// PolicyARNSelector selects a reference to a Policy to retrieve its
 	// Policy ARN
 	// +optional
-	PolicyARNSelector *xpv1.Selector `json:"policyArnSelector,omitempty"`
+	PolicyARNSelector *xpv1.NamespacedSelector `json:"policyArnSelector,omitempty"`
 
 	// UserName presents the name of the User.
 	// +immutable
@@ -47,18 +48,18 @@ type UserPolicyAttachmentParameters struct {
 
 	// UserNameRef references to an User to retrieve its userName
 	// +optional
-	UserNameRef *xpv1.Reference `json:"userNameRef,omitempty"`
+	UserNameRef *xpv1.NamespacedReference `json:"userNameRef,omitempty"`
 
 	// UserNameSelector selects a reference to an User to retrieve its userName
 	// +optional
-	UserNameSelector *xpv1.Selector `json:"userNameSelector,omitempty"`
+	UserNameSelector *xpv1.NamespacedSelector `json:"userNameSelector,omitempty"`
 }
 
 // A UserPolicyAttachmentSpec defines the desired state of an
 // UserPolicyAttachment.
 type UserPolicyAttachmentSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       UserPolicyAttachmentParameters `json:"forProvider"`
+	xpv2.ManagedResourceSpec `json:",inline"`
+	ForProvider              UserPolicyAttachmentParameters `json:"forProvider"`
 }
 
 // UserPolicyAttachmentObservation keeps the state for the external resource
@@ -76,15 +77,15 @@ type UserPolicyAttachmentStatus struct {
 
 // +kubebuilder:object:root=true
 
-// A UserPolicyAttachment is a managed resource that represents an AWS IAM
-// User policy attachment.
+// A UserPolicyAttachment is a namespaced managed resource that represents an
+// AWS IAM User policy attachment.
 // +kubebuilder:printcolumn:name="USERNAME",type="string",JSONPath=".spec.forProvider.userName"
 // +kubebuilder:printcolumn:name="POLICYARN",type="string",JSONPath=".spec.forProvider.policyArn"
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,aws}
+// +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,aws}
 type UserPolicyAttachment struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

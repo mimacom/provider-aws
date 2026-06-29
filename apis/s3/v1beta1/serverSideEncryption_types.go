@@ -70,11 +70,11 @@ type ServerSideEncryptionByDefault struct {
 
 	// KMSMasterKeyIDRef references an KMSKey to retrieve its ID
 	// +optional
-	KMSMasterKeyIDRef *xpv1.Reference `json:"kmsMasterKeyIdRef,omitempty"`
+	KMSMasterKeyIDRef *xpv1.NamespacedReference `json:"kmsMasterKeyIdRef,omitempty"`
 
 	// KMSMasterKeyIDSelector selects a reference to an KMSKey to retrieve its ID
 	// +optional
-	KMSMasterKeyIDSelector *xpv1.Selector `json:"kmsMasterKeyIdSelector,omitempty"`
+	KMSMasterKeyIDSelector *xpv1.NamespacedSelector `json:"kmsMasterKeyIdSelector,omitempty"`
 
 	// NOTE(muvaf): aws:kms is not accepted by kubebuilder enum.
 

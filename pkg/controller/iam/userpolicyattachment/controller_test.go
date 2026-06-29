@@ -29,7 +29,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 
-	"github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1"
+	iamv1beta1m "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1m"
 	"github.com/crossplane-contrib/provider-aws/pkg/clients/iam"
 	"github.com/crossplane-contrib/provider-aws/pkg/clients/iam/fake"
 	errorutils "github.com/crossplane-contrib/provider-aws/pkg/utils/errors"
@@ -48,26 +48,26 @@ type args struct {
 	cr  resource.Managed
 }
 
-type userPolicyModifier func(*v1beta1.UserPolicyAttachment)
+type userPolicyModifier func(*iamv1beta1m.UserPolicyAttachment)
 
 func withConditions(c ...xpv1.Condition) userPolicyModifier {
-	return func(r *v1beta1.UserPolicyAttachment) { r.Status.ConditionedStatus.Conditions = c }
+	return func(r *iamv1beta1m.UserPolicyAttachment) { r.Status.ConditionedStatus.Conditions = c }
 }
 
 func withUserName(s string) userPolicyModifier {
-	return func(r *v1beta1.UserPolicyAttachment) { r.Spec.ForProvider.UserName = s }
+	return func(r *iamv1beta1m.UserPolicyAttachment) { r.Spec.ForProvider.UserName = s }
 }
 
 func withSpecPolicyArn(s string) userPolicyModifier {
-	return func(r *v1beta1.UserPolicyAttachment) { r.Spec.ForProvider.PolicyARN = s }
+	return func(r *iamv1beta1m.UserPolicyAttachment) { r.Spec.ForProvider.PolicyARN = s }
 }
 
 func withStatusPolicyArn(s string) userPolicyModifier {
-	return func(r *v1beta1.UserPolicyAttachment) { r.Status.AtProvider.AttachedPolicyARN = s }
+	return func(r *iamv1beta1m.UserPolicyAttachment) { r.Status.AtProvider.AttachedPolicyARN = s }
 }
 
-func userPolicy(m ...userPolicyModifier) *v1beta1.UserPolicyAttachment {
-	cr := &v1beta1.UserPolicyAttachment{}
+func userPolicy(m ...userPolicyModifier) *iamv1beta1m.UserPolicyAttachment {
+	cr := &iamv1beta1m.UserPolicyAttachment{}
 	for _, f := range m {
 		f(cr)
 	}

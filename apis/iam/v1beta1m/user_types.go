@@ -14,11 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v1beta1m
 
 import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	iamv1beta1 "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1"
 )
 
 // UserParameters define the desired state of an AWS IAM User.
@@ -34,13 +37,13 @@ type UserParameters struct {
 
 	// A list of tags that you want to attach to the newly created user.
 	// +optional
-	Tags []Tag `json:"tags,omitempty"`
+	Tags []iamv1beta1.Tag `json:"tags,omitempty"`
 }
 
 // UserSpec defines the desired state of an IAM User.
 type UserSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       UserParameters `json:"forProvider"`
+	xpv2.ManagedResourceSpec `json:",inline"`
+	ForProvider              UserParameters `json:"forProvider"`
 }
 
 // UserObservation keeps the state for the external resource
@@ -60,14 +63,14 @@ type UserStatus struct {
 
 // +kubebuilder:object:root=true
 
-// A User is a managed resource that represents an AWS IAM User.
+// A User is a namespaced managed resource that represents an AWS IAM User.
 // +kubebuilder:printcolumn:name="ARN",type="string",JSONPath=".status.atProvider.arn"
 // +kubebuilder:printcolumn:name="ID",type="string",JSONPath=".status.atProvider.userId"
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,aws}
+// +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,aws}
 type User struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

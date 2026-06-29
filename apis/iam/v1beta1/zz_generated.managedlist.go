@@ -65,15 +65,6 @@ func (l *OpenIDConnectProviderList) GetItems() []resource.Managed {
 	return items
 }
 
-// GetItems of this PolicyList.
-func (l *PolicyList) GetItems() []resource.Managed {
-	items := make([]resource.Managed, len(l.Items))
-	for i := range l.Items {
-		items[i] = &l.Items[i]
-	}
-	return items
-}
-
 // GetItems of this RoleList.
 func (l *RoleList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
@@ -94,24 +85,6 @@ func (l *RolePolicyAttachmentList) GetItems() []resource.Managed {
 
 // GetItems of this RolePolicyList.
 func (l *RolePolicyList) GetItems() []resource.Managed {
-	items := make([]resource.Managed, len(l.Items))
-	for i := range l.Items {
-		items[i] = &l.Items[i]
-	}
-	return items
-}
-
-// GetItems of this UserList.
-func (l *UserList) GetItems() []resource.Managed {
-	items := make([]resource.Managed, len(l.Items))
-	for i := range l.Items {
-		items[i] = &l.Items[i]
-	}
-	return items
-}
-
-// GetItems of this UserPolicyAttachmentList.
-func (l *UserPolicyAttachmentList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))
 	for i := range l.Items {
 		items[i] = &l.Items[i]

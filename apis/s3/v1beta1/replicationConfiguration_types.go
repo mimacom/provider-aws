@@ -36,11 +36,11 @@ type ReplicationConfiguration struct {
 
 	// RoleRef references an IAMRole to retrieve its Name
 	// +optional
-	RoleRef *xpv1.Reference `json:"roleRef,omitempty"`
+	RoleRef *xpv1.NamespacedReference `json:"roleRef,omitempty"`
 
 	// RoleSelector selects a reference to an IAMRole to retrieve its Name
 	// +optional
-	RoleSelector *xpv1.Selector `json:"roleSelector,omitempty"`
+	RoleSelector *xpv1.NamespacedSelector `json:"roleSelector,omitempty"`
 
 	// A container for one or more replication rules. A replication configuration
 	// must have at least one rule and can contain a maximum of 1,000 rules.
@@ -159,11 +159,11 @@ type Destination struct {
 
 	// BucketRef references a Bucket to retrieve its Name
 	// +optional
-	BucketRef *xpv1.Reference `json:"bucketRef,omitempty"`
+	BucketRef *xpv1.NamespacedReference `json:"bucketRef,omitempty"`
 
 	// BucketSelector selects a reference to a Bucket to retrieve its Name
 	// +optional
-	BucketSelector *xpv1.Selector `json:"bucketSelector,omitempty"`
+	BucketSelector *xpv1.NamespacedSelector `json:"bucketSelector,omitempty"`
 
 	// A container that provides information about encryption. If SourceSelectionCriteria
 	// is specified, you must specify this element.
@@ -214,11 +214,11 @@ type EncryptionConfiguration struct {
 
 	// ReplicaKmsKeyIDRef references an KMSKey to retrieve its ID
 	// +optional
-	ReplicaKmsKeyIDRef *xpv1.Reference `json:"replicaKmsKeyIdRef,omitempty"`
+	ReplicaKmsKeyIDRef *xpv1.NamespacedReference `json:"replicaKmsKeyIdRef,omitempty"`
 
 	// ReplicaKmsKeyIDSelector selects a reference to an KMSKey to retrieve its ID
 	// +optional
-	ReplicaKmsKeyIDSelector *xpv1.Selector `json:"replicaKmsKeyIdSelector,omitempty"`
+	ReplicaKmsKeyIDSelector *xpv1.NamespacedSelector `json:"replicaKmsKeyIdSelector,omitempty"`
 }
 
 // Metrics specifies replication metrics-related settings enabling metrics

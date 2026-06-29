@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/crossplane-contrib/provider-aws/apis/s3/common"
@@ -214,8 +215,8 @@ const (
 
 // BucketSpec represents the desired state of the Bucket.
 type BucketSpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       BucketParameters `json:"forProvider"`
+	xpv2.ManagedResourceSpec `json:",inline"`
+	ForProvider              BucketParameters `json:"forProvider"`
 }
 
 // BucketExternalStatus keeps the state for the external resource
@@ -239,7 +240,7 @@ type BucketStatus struct {
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,aws}
+// +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,aws}
 type Bucket struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

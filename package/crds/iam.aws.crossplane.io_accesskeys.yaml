@@ -85,7 +85,11 @@ spec:
                     - Inactive
                     type: string
                   userName:
-                    description: Username contains the name of the User.
+                    description: |-
+                      Username contains the name of the User.
+                      NOTE(mimacom): auto-resolution of the User reference was removed because
+                      User is now namespaced (iam.aws.m.crossplane.io) and this cluster-scoped
+                      resource cannot reference it cross-scope. Set userName explicitly.
                     type: string
                   userNameRef:
                     description: UsernameRef references to an User to retrieve its

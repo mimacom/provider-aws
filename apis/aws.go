@@ -22,12 +22,14 @@ import (
 
 	iamv1alpha1 "github.com/crossplane-contrib/provider-aws/apis/iam/v1alpha1"
 	iamv1beta1 "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1"
+	iamv1beta1m "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1m"
 	kmsv1alpha1 "github.com/crossplane-contrib/provider-aws/apis/kms/v1alpha1"
 	s3v1alpha2 "github.com/crossplane-contrib/provider-aws/apis/s3/v1alpha3"
 	s3v1beta1 "github.com/crossplane-contrib/provider-aws/apis/s3/v1beta1"
 	snsv1beta1 "github.com/crossplane-contrib/provider-aws/apis/sns/v1beta1"
 	sqsv1beta1 "github.com/crossplane-contrib/provider-aws/apis/sqs/v1beta1"
 	awsv1beta1 "github.com/crossplane-contrib/provider-aws/apis/v1beta1"
+	awsv1beta1m "github.com/crossplane-contrib/provider-aws/apis/v1beta1m"
 )
 
 // NOTE(mimacom): This provider has been trimmed to the S3 and IAM service
@@ -41,12 +43,14 @@ func init() {
 	AddToSchemes = append(AddToSchemes,
 		iamv1alpha1.SchemeBuilder.AddToScheme,
 		iamv1beta1.SchemeBuilder.AddToScheme,
+		iamv1beta1m.SchemeBuilder.AddToScheme,
 		kmsv1alpha1.SchemeBuilder.AddToScheme,
 		s3v1alpha2.SchemeBuilder.AddToScheme,
 		s3v1beta1.SchemeBuilder.AddToScheme,
 		snsv1beta1.SchemeBuilder.AddToScheme,
 		sqsv1beta1.SchemeBuilder.AddToScheme,
 		awsv1beta1.SchemeBuilder.AddToScheme,
+		awsv1beta1m.SchemeBuilder.AddToScheme,
 	)
 }
 

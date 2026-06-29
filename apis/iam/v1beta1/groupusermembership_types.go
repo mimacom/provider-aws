@@ -40,8 +40,10 @@ type GroupUserMembershipParameters struct {
 	GroupNameSelector *xpv1.Selector `json:"groupNameSelector,omitempty"`
 
 	// UserName presents the name of the User.
+	// NOTE(mimacom): auto-resolution of the User reference was removed because
+	// User is now namespaced (iam.aws.m.crossplane.io) and this cluster-scoped
+	// resource cannot reference it cross-scope. Set userName explicitly.
 	// +immutable
-	// +crossplane:generate:reference:type=User
 	UserName string `json:"userName,omitempty"`
 
 	// UserNameRef references to a User to retrieve its userName
