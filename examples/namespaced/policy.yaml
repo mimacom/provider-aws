@@ -1,0 +1,24 @@
+---
+# A namespaced IAM Policy.
+apiVersion: iam.aws.m.crossplane.io/v1beta1
+kind: Policy
+metadata:
+  name: example-policy
+  namespace: default
+spec:
+  forProvider:
+    name: example-policy
+    document: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": ["s3:ListAllMyBuckets"],
+            "Resource": "*"
+          }
+        ]
+      }
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig

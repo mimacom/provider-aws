@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1"
+	iamv1beta1m "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1m"
 	"github.com/crossplane-contrib/provider-aws/pkg/clients/iam"
 	"github.com/crossplane-contrib/provider-aws/pkg/clients/iam/fake"
 	errorutils "github.com/crossplane-contrib/provider-aws/pkg/utils/errors"
@@ -113,24 +114,24 @@ type args struct {
 	cr   resource.Managed
 }
 
-type policyModifier func(*v1beta1.Policy)
+type policyModifier func(*iamv1beta1m.Policy)
 
 func withExternalName(s string) policyModifier {
-	return func(r *v1beta1.Policy) { meta.SetExternalName(r, s) }
+	return func(r *iamv1beta1m.Policy) { meta.SetExternalName(r, s) }
 }
 
 func withConditions(c ...xpv1.Condition) policyModifier {
-	return func(r *v1beta1.Policy) { r.Status.ConditionedStatus.Conditions = c }
+	return func(r *iamv1beta1m.Policy) { r.Status.ConditionedStatus.Conditions = c }
 }
 
-func withSpec(spec v1beta1.PolicyParameters) policyModifier {
-	return func(r *v1beta1.Policy) {
+func withSpec(spec iamv1beta1m.PolicyParameters) policyModifier {
+	return func(r *iamv1beta1m.Policy) {
 		r.Spec.ForProvider = spec
 	}
 }
 
 func withPath(path string) policyModifier {
-	return func(r *v1beta1.Policy) {
+	return func(r *iamv1beta1m.Policy) {
 		r.Spec.ForProvider.Path = pointer.ToOrNilIfZeroValue(path)
 	}
 }
@@ -142,13 +143,13 @@ func withTags(tagMaps ...map[string]string) policyModifier {
 			tagList = append(tagList, v1beta1.Tag{Key: k, Value: v})
 		}
 	}
-	return func(r *v1beta1.Policy) {
+	return func(r *iamv1beta1m.Policy) {
 		r.Spec.ForProvider.Tags = tagList
 	}
 }
 
-func policy(m ...policyModifier) *v1beta1.Policy {
-	cr := &v1beta1.Policy{}
+func policy(m ...policyModifier) *iamv1beta1m.Policy {
+	cr := &iamv1beta1m.Policy{}
 	cr.Spec.ForProvider.Name = name
 	for _, f := range m {
 		f(cr)
@@ -184,13 +185,13 @@ func TestObserve(t *testing.T) {
 						}, nil
 					},
 				},
-				cr: policy(withSpec(v1beta1.PolicyParameters{
+				cr: policy(withSpec(iamv1beta1m.PolicyParameters{
 					Document: document,
 					Name:     name,
 				}), withExternalName(policyArn)),
 			},
 			want: want{
-				cr: policy(withSpec(v1beta1.PolicyParameters{
+				cr: policy(withSpec(iamv1beta1m.PolicyParameters{
 					Document: document,
 					Name:     name,
 				}), withExternalName(policyArn),
@@ -217,13 +218,13 @@ func TestObserve(t *testing.T) {
 						}, nil
 					},
 				},
-				cr: policy(withSpec(v1beta1.PolicyParameters{
+				cr: policy(withSpec(iamv1beta1m.PolicyParameters{
 					Document: document,
 					Name:     name,
 				}), withExternalName(policyArn)),
 			},
 			want: want{
-				cr: policy(withSpec(v1beta1.PolicyParameters{
+				cr: policy(withSpec(iamv1beta1m.PolicyParameters{
 					Document: document,
 					Name:     name,
 				}), withExternalName(policyArn),
@@ -394,7 +395,7 @@ func TestObserve(t *testing.T) {
 						}, nil
 					},
 				},
-				cr: policy(withSpec(v1beta1.PolicyParameters{
+				cr: policy(withSpec(iamv1beta1m.PolicyParameters{
 					Document: document,
 					Name:     name,
 					Tags: []v1beta1.Tag{
@@ -403,7 +404,7 @@ func TestObserve(t *testing.T) {
 				}), withExternalName(policyArn)),
 			},
 			want: want{
-				cr: policy(withSpec(v1beta1.PolicyParameters{
+				cr: policy(withSpec(iamv1beta1m.PolicyParameters{
 					Document: document,
 					Name:     name,
 					Tags: []v1beta1.Tag{
@@ -464,7 +465,7 @@ func TestCreate(t *testing.T) {
 						}, nil
 					},
 				},
-				cr: policy(withSpec(v1beta1.PolicyParameters{
+				cr: policy(withSpec(iamv1beta1m.PolicyParameters{
 					Name:        name,
 					Document:    document,
 					Description: aws.String("description"),
@@ -477,7 +478,7 @@ func TestCreate(t *testing.T) {
 			},
 			want: want{
 				cr: policy(
-					withSpec(v1beta1.PolicyParameters{
+					withSpec(iamv1beta1m.PolicyParameters{
 						Name:        name,
 						Document:    document,
 						Description: aws.String("description"),

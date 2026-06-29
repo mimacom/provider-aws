@@ -31,11 +31,11 @@ type LoggingConfiguration struct {
 
 	// TargetBucketRef references an S3Bucket to retrieve its name
 	// +optional
-	TargetBucketRef *xpv1.Reference `json:"targetBucketRef,omitempty"`
+	TargetBucketRef *xpv1.NamespacedReference `json:"targetBucketRef,omitempty"`
 
 	// TargetBucketSelector selects a reference to an S3Bucket to retrieve its name
 	// +optional
-	TargetBucketSelector *xpv1.Selector `json:"targetBucketSelector,omitempty"`
+	TargetBucketSelector *xpv1.NamespacedSelector `json:"targetBucketSelector,omitempty"`
 
 	// A prefix for all log object keys.
 	TargetPrefix string `json:"targetPrefix"`

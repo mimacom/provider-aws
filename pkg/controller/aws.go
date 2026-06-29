@@ -37,6 +37,7 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 	return setup.SetupControllers(
 		mgr, o,
 		config.Setup,
+		config.SetupNamespaced,
 		iam.Setup,
 		s3.Setup,
 	)

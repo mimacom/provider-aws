@@ -70,21 +70,10 @@ func ResolvePrincipal(ctx context.Context, r *reference.APIResolver, principal *
 		return nil
 	}
 	for i := range principal.AWSPrincipals {
-		if principal.AWSPrincipals[i].UserARNRef != nil || principal.AWSPrincipals[i].UserARNSelector != nil {
-			rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
-				CurrentValue: reference.FromPtrValue(principal.AWSPrincipals[i].UserARN),
-				Reference:    principal.AWSPrincipals[i].UserARNRef,
-				Selector:     principal.AWSPrincipals[i].UserARNSelector,
-				To:           reference.To{Managed: &iamv1beta1.User{}, List: &iamv1beta1.UserList{}},
-				Extract:      iamv1beta1.UserARN(),
-			})
-			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("spec.forProvider.statement[%d].principal.aws[%d].UserARN", statementIndex, i))
-			}
-			principal.AWSPrincipals[i].UserARN = reference.ToPtrValue(rsp.ResolvedValue)
-			principal.AWSPrincipals[i].UserARNRef = rsp.ResolvedReference
-		}
-
+		// NOTE(mimacom): User reference resolution was removed because User is
+		// now namespaced (iam.aws.m.crossplane.io) and this cluster-scoped
+		// BucketPolicy cannot reference it cross-scope. Set the principal's
+		// UserARN explicitly. IAM Role remains cluster-scoped and resolvable.
 		if principal.AWSPrincipals[i].IAMRoleARNRef != nil || principal.AWSPrincipals[i].IAMRoleARNSelector != nil {
 			rsp, err := r.Resolve(ctx, reference.ResolutionRequest{
 				CurrentValue: reference.FromPtrValue(principal.AWSPrincipals[i].IAMRoleARN),

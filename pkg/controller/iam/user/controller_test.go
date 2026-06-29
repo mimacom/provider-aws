@@ -33,6 +33,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1"
+	iamv1beta1m "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1m"
 	"github.com/crossplane-contrib/provider-aws/pkg/clients/iam/fake"
 	errorutils "github.com/crossplane-contrib/provider-aws/pkg/utils/errors"
 )
@@ -76,14 +77,14 @@ type args struct {
 	cr  resource.Managed
 }
 
-type userModifier func(*v1beta1.User)
+type userModifier func(*iamv1beta1m.User)
 
 func withConditions(c ...xpv1.Condition) userModifier {
-	return func(r *v1beta1.User) { r.Status.ConditionedStatus.Conditions = c }
+	return func(r *iamv1beta1m.User) { r.Status.ConditionedStatus.Conditions = c }
 }
 
 func withExternalName(name string) userModifier {
-	return func(r *v1beta1.User) { meta.SetExternalName(r, name) }
+	return func(r *iamv1beta1m.User) { meta.SetExternalName(r, name) }
 }
 
 func withTags(tagMaps ...map[string]string) userModifier {
@@ -93,25 +94,25 @@ func withTags(tagMaps ...map[string]string) userModifier {
 			tagList = append(tagList, v1beta1.Tag{Key: k, Value: v})
 		}
 	}
-	return func(r *v1beta1.User) {
+	return func(r *iamv1beta1m.User) {
 		r.Spec.ForProvider.Tags = tagList
 	}
 }
 
 func withPath(path *string) userModifier {
-	return func(r *v1beta1.User) {
+	return func(r *iamv1beta1m.User) {
 		r.Spec.ForProvider.Path = path
 	}
 }
 
 func withBoundary(boundary *string) userModifier {
-	return func(r *v1beta1.User) {
+	return func(r *iamv1beta1m.User) {
 		r.Spec.ForProvider.PermissionsBoundary = boundary
 	}
 }
 
-func user(m ...userModifier) *v1beta1.User {
-	cr := &v1beta1.User{}
+func user(m ...userModifier) *iamv1beta1m.User {
+	cr := &iamv1beta1m.User{}
 	for _, f := range m {
 		f(cr)
 	}

@@ -31,14 +31,14 @@ import (
 
 // ResolveReferences of this Bucket.
 func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error {
-	r := reference.NewAPIResolver(c, mg)
+	r := reference.NewAPINamespacedResolver(c, mg)
 
-	var rsp reference.ResolutionResponse
+	var rsp reference.NamespacedResolutionResponse
 	var err error
 
 	if mg.Spec.ForProvider.ServerSideEncryptionConfiguration != nil {
 		for i4 := 0; i4 < len(mg.Spec.ForProvider.ServerSideEncryptionConfiguration.Rules); i4++ {
-			rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+			rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 				CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.ServerSideEncryptionConfiguration.Rules[i4].ApplyServerSideEncryptionByDefault.KMSMasterKeyID),
 				Extract:      reference.ExternalName(),
 				Namespace:    mg.GetNamespace(),
@@ -58,7 +58,7 @@ func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error 
 		}
 	}
 	if mg.Spec.ForProvider.LoggingConfiguration != nil {
-		rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+		rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 			CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.LoggingConfiguration.TargetBucket),
 			Extract:      reference.ExternalName(),
 			Namespace:    mg.GetNamespace(),
@@ -77,7 +77,7 @@ func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error 
 
 	}
 	if mg.Spec.ForProvider.ReplicationConfiguration != nil {
-		rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+		rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 			CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.ReplicationConfiguration.Role),
 			Extract:      v1beta1.RoleARN(),
 			Namespace:    mg.GetNamespace(),
@@ -97,7 +97,7 @@ func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error 
 	}
 	if mg.Spec.ForProvider.ReplicationConfiguration != nil {
 		for i4 := 0; i4 < len(mg.Spec.ForProvider.ReplicationConfiguration.Rules); i4++ {
-			rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+			rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 				CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.ReplicationConfiguration.Rules[i4].Destination.Bucket),
 				Extract:      BucketARN(),
 				Namespace:    mg.GetNamespace(),
@@ -119,7 +119,7 @@ func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error 
 	if mg.Spec.ForProvider.ReplicationConfiguration != nil {
 		for i4 := 0; i4 < len(mg.Spec.ForProvider.ReplicationConfiguration.Rules); i4++ {
 			if mg.Spec.ForProvider.ReplicationConfiguration.Rules[i4].Destination.EncryptionConfiguration != nil {
-				rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+				rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 					CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.ReplicationConfiguration.Rules[i4].Destination.EncryptionConfiguration.ReplicaKmsKeyID),
 					Extract:      reference.ExternalName(),
 					Namespace:    mg.GetNamespace(),
@@ -141,7 +141,7 @@ func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error 
 	}
 	if mg.Spec.ForProvider.NotificationConfiguration != nil {
 		for i4 := 0; i4 < len(mg.Spec.ForProvider.NotificationConfiguration.QueueConfigurations); i4++ {
-			rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+			rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 				CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.NotificationConfiguration.QueueConfigurations[i4].QueueArn),
 				Extract:      v1beta11.QueueARN(),
 				Namespace:    mg.GetNamespace(),
@@ -162,7 +162,7 @@ func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error 
 	}
 	if mg.Spec.ForProvider.NotificationConfiguration != nil {
 		for i4 := 0; i4 < len(mg.Spec.ForProvider.NotificationConfiguration.TopicConfigurations); i4++ {
-			rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+			rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 				CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.NotificationConfiguration.TopicConfigurations[i4].TopicArn),
 				Extract:      v1beta12.SNSTopicARN(),
 				Namespace:    mg.GetNamespace(),

@@ -33,7 +33,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1"
+	iamv1beta1m "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1m"
 	"github.com/crossplane-contrib/provider-aws/pkg/clients/iam"
 	"github.com/crossplane-contrib/provider-aws/pkg/features"
 	connectaws "github.com/crossplane-contrib/provider-aws/pkg/utils/connect/aws"
@@ -59,7 +59,7 @@ const (
 
 // SetupUser adds a controller that reconciles Users.
 func SetupUser(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1beta1.UserGroupKind)
+	name := managed.ControllerName(iamv1beta1m.UserGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithCriticalAnnotationUpdater(custommanaged.NewRetryingCriticalAnnotationUpdater(mgr.GetClient())),
@@ -75,14 +75,14 @@ func SetupUser(mgr ctrl.Manager, o controller.Options) error {
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1beta1.UserGroupVersionKind),
+		resource.ManagedKind(iamv1beta1m.UserGroupVersionKind),
 		reconcilerOpts...)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		WithOptions(o.ForControllerRuntime()).
 		WithEventFilter(resource.DesiredStateChanged()).
-		For(&v1beta1.User{}).
+		For(&iamv1beta1m.User{}).
 		Complete(r)
 }
 
@@ -105,7 +105,7 @@ type external struct {
 }
 
 func (e *external) Observe(ctx context.Context, mgd resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mgd.(*v1beta1.User)
+	cr, ok := mgd.(*iamv1beta1m.User)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errUnexpectedObject)
 	}
@@ -133,7 +133,7 @@ func (e *external) Observe(ctx context.Context, mgd resource.Managed) (managed.E
 
 	cr.SetConditions(xpv1.Available())
 
-	cr.Status.AtProvider = v1beta1.UserObservation{
+	cr.Status.AtProvider = iamv1beta1m.UserObservation{
 		ARN:    aws.ToString(user.Arn),
 		UserID: aws.ToString(user.UserId),
 	}
@@ -145,7 +145,7 @@ func (e *external) Observe(ctx context.Context, mgd resource.Managed) (managed.E
 }
 
 func (e *external) Create(ctx context.Context, mgd resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mgd.(*v1beta1.User)
+	cr, ok := mgd.(*iamv1beta1m.User)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errUnexpectedObject)
 	}
@@ -162,7 +162,7 @@ func (e *external) Create(ctx context.Context, mgd resource.Managed) (managed.Ex
 }
 
 func (e *external) Update(ctx context.Context, mgd resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mgd.(*v1beta1.User)
+	cr, ok := mgd.(*iamv1beta1m.User)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errUnexpectedObject)
 	}
@@ -193,7 +193,7 @@ func (e *external) Update(ctx context.Context, mgd resource.Managed) (managed.Ex
 }
 
 func (e *external) Delete(ctx context.Context, mgd resource.Managed) (managed.ExternalDelete, error) {
-	cr, ok := mgd.(*v1beta1.User)
+	cr, ok := mgd.(*iamv1beta1m.User)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errUnexpectedObject)
 	}
@@ -212,7 +212,7 @@ func (e *external) Disconnect(ctx context.Context) error {
 	return nil
 }
 
-func (e *external) updateUser(ctx context.Context, observed *awsiam.GetUserOutput, cr *v1beta1.User) error {
+func (e *external) updateUser(ctx context.Context, observed *awsiam.GetUserOutput, cr *iamv1beta1m.User) error {
 	if aws.ToString(observed.User.Path) != aws.ToString(cr.Spec.ForProvider.Path) {
 		_, err := e.client.UpdateUser(ctx, &awsiam.UpdateUserInput{
 			NewPath:  cr.Spec.ForProvider.Path,
@@ -225,7 +225,7 @@ func (e *external) updateUser(ctx context.Context, observed *awsiam.GetUserOutpu
 	return nil
 }
 
-func (e *external) updatePermissionsBoundary(ctx context.Context, observed *awsiam.GetUserOutput, cr *v1beta1.User) error {
+func (e *external) updatePermissionsBoundary(ctx context.Context, observed *awsiam.GetUserOutput, cr *iamv1beta1m.User) error {
 	boundaryArn := ""
 	var err error
 
@@ -254,7 +254,7 @@ func (e *external) updatePermissionsBoundary(ctx context.Context, observed *awsi
 	return nil
 }
 
-func (e *external) updateTags(ctx context.Context, observed *awsiam.GetUserOutput, cr *v1beta1.User) error {
+func (e *external) updateTags(ctx context.Context, observed *awsiam.GetUserOutput, cr *iamv1beta1m.User) error {
 	add, remove, _ := iam.DiffIAMTagsWithUpdates(cr.Spec.ForProvider.Tags, observed.User.Tags)
 
 	if len(add) > 0 {
@@ -278,7 +278,7 @@ func (e *external) updateTags(ctx context.Context, observed *awsiam.GetUserOutpu
 	return nil
 }
 
-func isUpToDate(cr *v1beta1.User, user *types.User) bool {
+func isUpToDate(cr *iamv1beta1m.User, user *types.User) bool {
 	// check path
 	isPathUpdated := aws.ToString(cr.Spec.ForProvider.Path) == aws.ToString(user.Path)
 

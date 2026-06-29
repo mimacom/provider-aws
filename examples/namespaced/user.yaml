@@ -1,0 +1,15 @@
+---
+# A namespaced IAM User.
+apiVersion: iam.aws.m.crossplane.io/v1beta1
+kind: User
+metadata:
+  name: example-user
+  namespace: default
+spec:
+  forProvider:
+    tags:
+      - key: example
+        value: "true"
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig

@@ -164,6 +164,9 @@ spec:
                     description: |-
                       PolicyARN is the Amazon Resource Name (ARN) of the IAM policy you want to
                       attach.
+                      NOTE(mimacom): auto-resolution of the Policy reference was removed because
+                      Policy is now namespaced (iam.aws.m.crossplane.io) and this cluster-scoped
+                      resource cannot reference it cross-scope. Set policyArn explicitly.
                     type: string
                   policyArnRef:
                     description: PolicyARNRef references a Policy to retrieve its

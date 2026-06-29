@@ -7,7 +7,7 @@ import (
 	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1"
+	iamv1beta1m "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1m"
 )
 
 var (
@@ -52,7 +52,7 @@ var (
 
 func TestIsPolicyUpToDate(t *testing.T) {
 	type args struct {
-		p       v1beta1.PolicyParameters
+		p       iamv1beta1m.PolicyParameters
 		version iamtypes.PolicyVersion
 	}
 	type want struct {
@@ -66,7 +66,7 @@ func TestIsPolicyUpToDate(t *testing.T) {
 	}{
 		"SameFields": {
 			args: args{
-				p: v1beta1.PolicyParameters{
+				p: iamv1beta1m.PolicyParameters{
 					Document: document1,
 				},
 				version: iamtypes.PolicyVersion{
@@ -79,7 +79,7 @@ func TestIsPolicyUpToDate(t *testing.T) {
 		},
 		"DifferentFields": {
 			args: args{
-				p: v1beta1.PolicyParameters{
+				p: iamv1beta1m.PolicyParameters{
 					Document: document1,
 				},
 				version: iamtypes.PolicyVersion{
@@ -92,7 +92,7 @@ func TestIsPolicyUpToDate(t *testing.T) {
 		},
 		"EmptyPolicy": {
 			args: args{
-				p: v1beta1.PolicyParameters{},
+				p: iamv1beta1m.PolicyParameters{},
 				version: iamtypes.PolicyVersion{
 					Document: &document2,
 				},
@@ -103,7 +103,7 @@ func TestIsPolicyUpToDate(t *testing.T) {
 		},
 		"SameFieldsSingleAction": {
 			args: args{
-				p: v1beta1.PolicyParameters{
+				p: iamv1beta1m.PolicyParameters{
 					Document: document1,
 				},
 				version: iamtypes.PolicyVersion{

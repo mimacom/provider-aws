@@ -1,0 +1,17 @@
+---
+# A namespaced UserPolicyAttachment binding the example User to the example
+# Policy. The references resolve within the same namespace.
+apiVersion: iam.aws.m.crossplane.io/v1beta1
+kind: UserPolicyAttachment
+metadata:
+  name: example-attachment
+  namespace: default
+spec:
+  forProvider:
+    userNameRef:
+      name: example-user
+    policyArnRef:
+      name: example-policy
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
