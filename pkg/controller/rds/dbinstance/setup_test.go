@@ -3,6 +3,7 @@ package dbinstance
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -425,6 +426,161 @@ func TestIsUpToDate(t *testing.T) {
 				err:      nil,
 			},
 		},
+		"Ignores Tags with TagsIgnore prefix*": {
+			args: args{
+				cr: &svcapitypes.DBInstance{
+					Spec: svcapitypes.DBInstanceSpec{
+						ForProvider: svcapitypes.DBInstanceParameters{
+							CustomDBInstanceParameters: svcapitypes.CustomDBInstanceParameters{
+								TagsIgnore: []svcapitypes.TagIgnoreRule{{Key: "aws:*"}, {Key: "c7n:*"}},
+							},
+							Tags: []*svcapitypes.Tag{
+								{Key: aws.String("env"), Value: aws.String("prod")},
+							},
+							DeletionProtection: aws.Bool(true),
+						},
+					},
+				},
+				out: &svcsdk.DescribeDBInstancesOutput{
+					DBInstances: []*svcsdk.DBInstance{
+						{
+							DeletionProtection: aws.Bool(true),
+							TagList: []*svcsdk.Tag{
+								{Key: aws.String("aws:createdBy"), Value: aws.String("terraform")},
+								{Key: aws.String("c7n:policy"), Value: aws.String("auto")},
+								{Key: aws.String("env"), Value: aws.String("prod")},
+							},
+						},
+					},
+				},
+				kube: test.NewMockClient(),
+			},
+			want: want{
+				upToDate: true,
+				err:      nil,
+			},
+		},
+		"Ignores Tags with TagsIgnore exact": {
+			args: args{
+				cr: &svcapitypes.DBInstance{
+					Spec: svcapitypes.DBInstanceSpec{
+						ForProvider: svcapitypes.DBInstanceParameters{
+							CustomDBInstanceParameters: svcapitypes.CustomDBInstanceParameters{
+								TagsIgnore: []svcapitypes.TagIgnoreRule{{Key: "aws:*"}, {Key: "c7n:policy"}},
+							},
+							Tags: []*svcapitypes.Tag{
+								{Key: aws.String("env"), Value: aws.String("prod")},
+							},
+							DeletionProtection: aws.Bool(true),
+						},
+					},
+				},
+				out: &svcsdk.DescribeDBInstancesOutput{
+					DBInstances: []*svcsdk.DBInstance{
+						{
+							DeletionProtection: aws.Bool(true),
+							TagList: []*svcsdk.Tag{
+								{Key: aws.String("aws:createdBy"), Value: aws.String("terraform")},
+								{Key: aws.String("c7n:policy"), Value: aws.String("auto")},
+								{Key: aws.String("c7n:other"), Value: aws.String("x")},
+								{Key: aws.String("env"), Value: aws.String("prod")},
+							},
+						},
+					},
+				},
+				kube: test.NewMockClient(),
+			},
+			want: want{
+				upToDate: false, // c7n:other should be removed since not ignored and not in spec
+				err:      nil,
+			},
+		},
+		"DoesNotIgnoreAllWithStarOnlyRule": {
+			args: args{
+				cr: &svcapitypes.DBInstance{
+					Spec: svcapitypes.DBInstanceSpec{
+						ForProvider: svcapitypes.DBInstanceParameters{
+							CustomDBInstanceParameters: svcapitypes.CustomDBInstanceParameters{
+								// User attempts to ignore all tags with a single "*" rule; guard should prevent this.
+								TagsIgnore: []svcapitypes.TagIgnoreRule{{Key: "*"}},
+							},
+							// Desired spec has no tags.
+							Tags:               []*svcapitypes.Tag{},
+							DeletionProtection: aws.Bool(true),
+						},
+					},
+				},
+				out: &svcsdk.DescribeDBInstancesOutput{
+					DBInstances: []*svcsdk.DBInstance{
+						{
+							DeletionProtection: aws.Bool(true),
+							TagList: []*svcsdk.Tag{
+								{Key: aws.String("env"), Value: aws.String("prod")}, // Should not be ignored; will cause diff
+							},
+						},
+					},
+				},
+				kube: test.NewMockClient(),
+			},
+			want: want{
+				upToDate: false, // env tag should be scheduled for removal
+				err:      nil,
+			},
+		},
+		"AvailabilityZoneDiffIgnored": {
+			args: args{
+				cr: &svcapitypes.DBInstance{
+					Spec: svcapitypes.DBInstanceSpec{
+						ForProvider: svcapitypes.DBInstanceParameters{
+							AvailabilityZone: aws.String("eu-central-1b"),
+						},
+					},
+				},
+				out: &svcsdk.DescribeDBInstancesOutput{
+					DBInstances: []*svcsdk.DBInstance{
+						{
+							AvailabilityZone: aws.String("eu-central-1a"),
+						},
+					},
+				},
+				kube: test.NewMockClient(),
+			},
+			want: want{
+				upToDate: true,
+				err:      nil,
+			},
+		},
+		"GP3BelowThresholdIopsAndStorageThroughputDiffReturnsError": {
+			args: args{
+				cr: &svcapitypes.DBInstance{
+					Spec: svcapitypes.DBInstanceSpec{
+						ForProvider: svcapitypes.DBInstanceParameters{
+							StorageType:       aws.String("gp3"),
+							AllocatedStorage:  aws.Int64(20),
+							Engine:            aws.String("postgres"),
+							IOPS:              aws.Int64(3200),
+							StorageThroughput: aws.Int64(150),
+						},
+					},
+				},
+				out: &svcsdk.DescribeDBInstancesOutput{
+					DBInstances: []*svcsdk.DBInstance{
+						{
+							StorageType:       aws.String("gp3"),
+							AllocatedStorage:  aws.Int64(20),
+							Engine:            aws.String("postgres"),
+							Iops:              aws.Int64(3000),
+							StorageThroughput: aws.Int64(125),
+						},
+					},
+				},
+				kube: test.NewMockClient(),
+			},
+			want: want{
+				upToDate: false,
+				err:      fmt.Errorf("cannot reconcile desired iops/storageThroughput: gp3 volumes below 400GB (engine: postgres) use fixed defaults (3000 IOPS / 125 MB/s). Increase allocatedStorage to provision custom values"),
+			},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -432,7 +588,7 @@ func TestIsUpToDate(t *testing.T) {
 			ce := newCustomExternal(tc.kube, nil)
 			upToDate, diffMsg, err := ce.isUpToDate(context.TODO(), cr, tc.args.out)
 
-			if diff := cmp.Diff(tc.want.err, err); diff != "" {
+			if diff := cmp.Diff(errToString(tc.want.err), errToString(err)); diff != "" {
 				t.Errorf("r: -want, +got error: \n%s", diff)
 			}
 			if diff := cmp.Diff(tc.want.upToDate, upToDate); diff != "" {
@@ -619,6 +775,29 @@ func TestPostObserve(t *testing.T) {
 				},
 			},
 		},
+		"availabilityZoneSetInStatus": {
+			args: args{
+				cr: &svcapitypes.DBInstance{
+					Status: svcapitypes.DBInstanceStatus{},
+				},
+				out: &svcsdk.DescribeDBInstancesOutput{
+					DBInstances: []*svcsdk.DBInstance{
+						{
+							DeletionProtection: aws.Bool(true),
+							AvailabilityZone:   aws.String("eu-central-1a"),
+						},
+					},
+				},
+				kube: test.NewMockClient(),
+			},
+			want: want{
+				err: nil,
+				statusAtProvider: &svcapitypes.CustomDBInstanceObservation{
+					DatabaseRole:     aws.String(databaseRoleStandalone),
+					AvailabilityZone: aws.String("eu-central-1a"),
+				},
+			},
+		},
 	}
 
 	for name, tc := range cases {
@@ -630,8 +809,136 @@ func TestPostObserve(t *testing.T) {
 			if diff := cmp.Diff(tc.want.err, err); diff != "" {
 				t.Errorf("r: -want, +got error: \n%s", diff)
 			}
-			if diff := cmp.Diff(tc.want.statusAtProvider.DatabaseRole, cr.Status.AtProvider.DatabaseRole); diff != "" {
-				t.Errorf("r: -want, +got: \n%s", diff)
+			if diff := cmp.Diff(tc.want.statusAtProvider, &cr.Status.AtProvider.CustomDBInstanceObservation); diff != "" {
+				t.Errorf("statusAtProvider: -want, +got: \n%s", diff)
+			}
+		})
+	}
+}
+
+func errToString(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
+}
+
+func TestPreUpdate(t *testing.T) {
+	type args struct {
+		cr  *svcapitypes.DBInstance
+		obj *svcsdk.ModifyDBInstanceInput
+	}
+
+	type want struct {
+		obj *svcsdk.ModifyDBInstanceInput
+		err error
+	}
+
+	cases := map[string]struct {
+		args
+		want
+	}{
+		"PortIsSetAsDBPortNumber": {
+			args: args{
+				cr: &svcapitypes.DBInstance{
+					Spec: svcapitypes.DBInstanceSpec{
+						ForProvider: svcapitypes.DBInstanceParameters{
+							Port: aws.Int64(5432),
+						},
+					},
+				},
+				obj: &svcsdk.ModifyDBInstanceInput{},
+			},
+			want: want{
+				obj: &svcsdk.ModifyDBInstanceInput{
+					DBPortNumber: aws.Int64(5432),
+				},
+			},
+		},
+		"LicenseModelNilForPostgresReplica": {
+			args: args{
+				cr: &svcapitypes.DBInstance{
+					Spec: svcapitypes.DBInstanceSpec{
+						ForProvider: svcapitypes.DBInstanceParameters{
+							Port: aws.Int64(5432),
+							CustomDBInstanceParameters: svcapitypes.CustomDBInstanceParameters{
+								SourceDBInstanceID: aws.String("source-db"),
+							},
+							Engine:       aws.String("postgres"),
+							LicenseModel: aws.String("postgresql-license"),
+						},
+					},
+				},
+				obj: &svcsdk.ModifyDBInstanceInput{
+					LicenseModel: aws.String("postgresql-license"),
+				},
+			},
+			want: want{
+				obj: &svcsdk.ModifyDBInstanceInput{
+					DBPortNumber: aws.Int64(5432),
+					LicenseModel: nil,
+				},
+			},
+		},
+		"LicenseModelKeptForPostgresPrimary": {
+			args: args{
+				cr: &svcapitypes.DBInstance{
+					Spec: svcapitypes.DBInstanceSpec{
+						ForProvider: svcapitypes.DBInstanceParameters{
+							Port:         aws.Int64(5432),
+							Engine:       aws.String("postgres"),
+							LicenseModel: aws.String("postgresql-license"),
+						},
+					},
+				},
+				obj: &svcsdk.ModifyDBInstanceInput{
+					LicenseModel: aws.String("postgresql-license"),
+				},
+			},
+			want: want{
+				obj: &svcsdk.ModifyDBInstanceInput{
+					DBPortNumber: aws.Int64(5432),
+					LicenseModel: aws.String("postgresql-license"),
+				},
+			},
+		},
+		"LicenseModelNilForMariaDBReplica": {
+			args: args{
+				cr: &svcapitypes.DBInstance{
+					Spec: svcapitypes.DBInstanceSpec{
+						ForProvider: svcapitypes.DBInstanceParameters{
+							Port:   aws.Int64(3306),
+							Engine: aws.String("mariadb"),
+							CustomDBInstanceParameters: svcapitypes.CustomDBInstanceParameters{
+								SourceDBInstanceID: aws.String("mariadb-primary"),
+							},
+							LicenseModel: aws.String("general-public-license"),
+						},
+					},
+				},
+				obj: &svcsdk.ModifyDBInstanceInput{
+					LicenseModel: aws.String("general-public-license"),
+				},
+			},
+			want: want{
+				obj: &svcsdk.ModifyDBInstanceInput{
+					DBPortNumber: aws.Int64(3306),
+					LicenseModel: nil,
+				},
+			},
+		},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			s := &shared{cache: &cache{}}
+			err := s.preUpdate(context.TODO(), tc.args.cr, tc.args.obj)
+
+			if diff := cmp.Diff(tc.want.err, err, cmpopts.EquateErrors()); diff != "" {
+				t.Errorf("r: -want, +got error:\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.want.obj, tc.args.obj, cmpopts.IgnoreUnexported(svcsdk.ModifyDBInstanceInput{})); diff != "" {
+				t.Errorf("ModifyDBInstanceInput: -want, +got:\n%s", diff)
 			}
 		})
 	}

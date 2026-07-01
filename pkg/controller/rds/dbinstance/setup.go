@@ -320,7 +320,7 @@ func (s *shared) updateConnectionDetails(ctx context.Context, cr *svcapitypes.DB
 	return details, nil
 }
 
-func (s *shared) preUpdate(ctx context.Context, cr *svcapitypes.DBInstance, obj *svcsdk.ModifyDBInstanceInput) (err error) {
+func (s *shared) preUpdate(ctx context.Context, cr *svcapitypes.DBInstance, obj *svcsdk.ModifyDBInstanceInput) (err error) { //nolint:gocyclo
 	obj.DBInstanceIdentifier = pointer.ToOrNilIfZeroValue(meta.GetExternalName(cr))
 	obj.ApplyImmediately = cr.Spec.ForProvider.ApplyImmediately
 	// Only set MasterUserPassword if it has changed, otherwise it triggers "Resetting master password" on aws side,
@@ -360,6 +360,15 @@ func (s *shared) preUpdate(ctx context.Context, cr *svcapitypes.DBInstance, obj 
 	}
 	if s.cache.backupRetentionPeriodUpToDate {
 		obj.BackupRetentionPeriod = nil
+	}
+
+	obj.DBPortNumber = cr.Spec.ForProvider.Port
+
+	// LicenseModel cannot be modified on read replicas - AWS rejects the entire ModifyDBInstance request.
+	// After LateInitialize(), licenseModel is always populated in spec.forProvider from the observed AWS state,
+	// which causes it to be included in every subsequent modify call.
+	if cr.Spec.ForProvider.SourceDBInstanceID != nil {
+		obj.LicenseModel = nil
 	}
 
 	return nil
@@ -472,6 +481,8 @@ func (s *shared) postObserve(ctx context.Context, cr *svcapitypes.DBInstance, re
 	default:
 		cr.Status.AtProvider.DatabaseRole = aws.String(databaseRoleStandalone)
 	}
+
+	cr.Status.AtProvider.AvailabilityZone = db.AvailabilityZone
 
 	obs.ConnectionDetails, err = s.updateConnectionDetails(ctx, cr, obs.ConnectionDetails)
 	return obs, err
@@ -616,6 +627,9 @@ func setPendingModifiedValues(cr *svcsdk.DescribeDBInstancesOutput) { //nolint:g
 			if cr.DBInstances[0].PendingModifiedValues.StorageType != nil {
 				cr.DBInstances[0].StorageType = cr.DBInstances[0].PendingModifiedValues.StorageType
 			}
+			if cr.DBInstances[0].PendingModifiedValues.Port != nil {
+				cr.DBInstances[0].DbInstancePort = cr.DBInstances[0].PendingModifiedValues.Port
+			}
 		}
 	}
 }
@@ -682,8 +696,20 @@ func (s *shared) isUpToDate(ctx context.Context, cr *svcapitypes.DBInstance, out
 	// Depending on whether the instance was created as gp2 or modified from another type (s.g. gp3) to gp2,
 	// AWS provides different responses for IOPS/StorageThroughput (either 0 or nil).
 	// Therefore, we consider both 0 and nil to be equivalent.
-	iopsChanged := !(pointer.Int64Value(cr.Spec.ForProvider.IOPS) == pointer.Int64Value(db.Iops))
-	storageThroughputChanged := !(pointer.Int64Value(cr.Spec.ForProvider.StorageThroughput) == pointer.Int64Value(db.StorageThroughput))
+	// For gp3 volumes below the engine-specific allocatedStorage threshold, AWS rejects custom
+	// iops/storageThroughput values. Return an error so the resource shows SYNCED=False.
+	iopsChanged := false
+	storageThroughputChanged := false
+	if isStorageTypeGP3BelowAllocatedStorageThreshold(cr) {
+		if pointer.Int64Value(cr.Spec.ForProvider.IOPS) != pointer.Int64Value(db.Iops) ||
+			pointer.Int64Value(cr.Spec.ForProvider.StorageThroughput) != pointer.Int64Value(db.StorageThroughput) {
+			return false, "", fmt.Errorf("cannot reconcile desired iops/storageThroughput: gp3 volumes below %dGB (engine: %s) use fixed defaults (3000 IOPS / 125 MB/s). Increase allocatedStorage to provision custom values",
+				gp3AllocatedStorageThreshold(cr), pointer.StringValue(cr.Spec.ForProvider.Engine))
+		}
+	} else {
+		iopsChanged = !(pointer.Int64Value(cr.Spec.ForProvider.IOPS) == pointer.Int64Value(db.Iops))
+		storageThroughputChanged = !(pointer.Int64Value(cr.Spec.ForProvider.StorageThroughput) == pointer.Int64Value(db.StorageThroughput))
+	}
 	s.cache.engineVersionUpToDate = isEngineVersionUpToDate(cr, out)
 	versionChanged := !s.cache.engineVersionUpToDate
 
@@ -694,6 +720,7 @@ func (s *shared) isUpToDate(ctx context.Context, cr *svcapitypes.DBInstance, out
 	diff = cmp.Diff(&svcapitypes.DBInstanceParameters{}, patch, cmpopts.EquateEmpty(),
 		cmpopts.IgnoreTypes(&xpv1.Reference{}, &xpv1.Selector{}, []xpv1.Reference{}),
 		cmpopts.IgnoreFields(svcapitypes.DBInstanceParameters{}, "Region"),
+		cmpopts.IgnoreFields(svcapitypes.DBInstanceParameters{}, "AvailabilityZone"),
 		cmpopts.IgnoreFields(svcapitypes.DBInstanceParameters{}, "AllowMajorVersionUpgrade"),
 		cmpopts.IgnoreFields(svcapitypes.DBInstanceParameters{}, "BackupRetentionPeriod"),
 		cmpopts.IgnoreFields(svcapitypes.DBInstanceParameters{}, "DBParameterGroupName"),
@@ -715,9 +742,29 @@ func (s *shared) isUpToDate(ctx context.Context, cr *svcapitypes.DBInstance, out
 		cmpopts.IgnoreFields(svcapitypes.CustomDBInstanceParameters{},
 			"SourceDBClusterID", "SourceDBClusterIDRef", "SourceDBClusterIDSelector",
 			"SourceDBInstanceID", "SourceDBInstanceIDRef", "SourceDBInstanceIDSelector"),
+		cmpopts.IgnoreFields(svcapitypes.CustomDBInstanceParameters{}, "TagsIgnore"),
 	)
 
-	s.cache.addTags, s.cache.removeTags = utils.DiffTags(cr.Spec.ForProvider.Tags, db.TagList)
+	// Build ignore rules: implicit aws:* + user supplied rules
+	ignore := []string{"aws:*"}
+	for _, r := range cr.Spec.ForProvider.TagsIgnore {
+		ignore = append(ignore, r.Key)
+	}
+	// Reset observed tags slice to avoid accumulation across reconciles
+	cr.Status.AtProvider.ObservedTags = nil
+	var observedTags []*svcsdk.Tag
+	if db.TagList != nil {
+		for _, tag := range db.TagList { // index discarded with _
+			// Capture all tags for observability
+			cr.Status.AtProvider.ObservedTags = append(cr.Status.AtProvider.ObservedTags, &svcapitypes.Tag{Key: tag.Key, Value: tag.Value})
+			// Filter only for diff purposes
+			if utils.ShouldIgnore(pointer.StringValue(tag.Key), ignore) {
+				continue
+			}
+			observedTags = append(observedTags, &svcsdk.Tag{Key: tag.Key, Value: tag.Value})
+		}
+	}
+	s.cache.addTags, s.cache.removeTags = utils.DiffTags(cr.Spec.ForProvider.Tags, observedTags)
 	tagsChanged := len(s.cache.addTags) != 0 || len(s.cache.removeTags) != 0
 
 	if diff == "" && !maintenanceWindowChanged && !backupWindowChanged && !backupRetentionPeriodChanged &&
@@ -1008,12 +1055,16 @@ func isStorageTypeGP3BelowAllocatedStorageThreshold(cr *svcapitypes.DBInstance) 
 		return false
 	}
 
-	switch allocatedStorage, engine := pointer.Int64Value(cr.Spec.ForProvider.AllocatedStorage), pointer.StringValue(cr.Spec.ForProvider.Engine); engine {
-	case "mariadb", "mysql", "postgres":
-		return allocatedStorage < 400
-	case "oracle-ee", "oracle-ee-cdb", "oracle-se2", "oracle-se2-cdb":
-		return allocatedStorage < 200
-	}
+	return pointer.Int64Value(cr.Spec.ForProvider.AllocatedStorage) < gp3AllocatedStorageThreshold(cr)
+}
 
-	return false
+// gp3AllocatedStorageThreshold returns the minimum allocatedStorage (in GB) required to provision custom iops/storageThroughput.
+func gp3AllocatedStorageThreshold(cr *svcapitypes.DBInstance) int64 {
+	switch pointer.StringValue(cr.Spec.ForProvider.Engine) {
+	case "mariadb", "mysql", "postgres":
+		return 400
+	case "oracle-ee", "oracle-ee-cdb", "oracle-se2", "oracle-se2-cdb":
+		return 200
+	}
+	return 400
 }
