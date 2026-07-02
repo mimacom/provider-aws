@@ -153,7 +153,7 @@ func useProviderConfigNamespaced(ctx context.Context, c client.Client, mg resour
 
 // resolveAWSConfig builds an *aws.Config from a (cluster-shaped) ProviderConfig.
 func resolveAWSConfig(ctx context.Context, c client.Client, pc *v1beta1.ProviderConfig, region string) (*aws.Config, error) { //nolint:gocyclo
-	switch s := pc.Spec.Credentials.Source; s { //nolint:exhaustive
+	switch s := pc.Spec.Credentials.Source; s {
 	case xpv1.CredentialsSourceInjectedIdentity:
 		if pc.Spec.AssumeRole != nil || pc.Spec.AssumeRoleARN != nil {
 			cfg, err := UsePodServiceAccountAssumeRole(ctx, []byte{}, DefaultSection, region, pc)
@@ -485,7 +485,7 @@ func GetConfigV1(ctx context.Context, c client.Client, mg resource.Managed, regi
 	if err := t.Track(ctx, lmg); err != nil {
 		return nil, errors.Wrap(err, "cannot track ProviderConfig usage")
 	}
-	switch s := pc.Spec.Credentials.Source; s { //nolint:exhaustive
+	switch s := pc.Spec.Credentials.Source; s {
 	case xpv1.CredentialsSourceInjectedIdentity:
 		if pc.Spec.AssumeRoleARN != nil || pc.Spec.AssumeRole != nil {
 			cfg, err := UsePodServiceAccountV1AssumeRole(ctx, []byte{}, pc, DefaultSection, region)
