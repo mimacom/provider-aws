@@ -148,13 +148,35 @@ $(ACK_GENERATE):
 	@$(GO) build -modfile "$(ROOT_DIR)/tools/go.mod" -o "$(ACK_GENERATE)" -tags codegen github.com/aws-controllers-k8s/code-generator/cmd/ack-generate || $(FAIL)
 	@$(OK) Built ack-generate $(ACK_VERSION)
 
+# Services whose generated types are retained only as dependencies of the S3
+# API (e.g. kms KeyId references in server-side-encryption / replication). We
+# keep their apis/ packages but do NOT ship their controllers, so the
+# regenerated pkg/controller/<svc> directories are dropped after generation.
+APIS_ONLY_SERVICES ?= kms
+
 services: $(ACK_GENERATE) $(GOIMPORTS)
 	@for svc in $(SERVICES); do \
 		$(INFO) Generating $$svc controllers and CRDs; \
 		PATH="${PATH}:$(TOOLS_HOST_DIR)"; \
 		$(ACK_GENERATE) crossplane --aws-sdk-go-version $(AWS_SDK_GO_VERSION) $$svc --output=./ || exit 1; \
+		$(MAKE) services.postprocess SVC=$$svc || exit 1; \
 		$(OK) Generating $$svc controllers and CRDs; \
 	done
+
+# Post-process a freshly generated service:
+#  1. ack-generate (v0.26.1) emits crossplane-runtime v1 (non-modular) import
+#     paths, but this provider is on crossplane-runtime/v2. Rewrite them to the
+#     /v2 module path. Idempotent: paths already at .../crossplane-runtime/v2/...
+#     don't match (v2 sits between runtime/ and apis|pkg), so re-running never
+#     produces /v2/v2/.
+#  2. For apis-only services, drop the regenerated controllers so the tree stays
+#     consistent with what we ship (see APIS_ONLY_SERVICES above).
+services.postprocess:
+	@find ./apis/$(SVC) ./pkg/controller/$(SVC) -type f -name '*.go' 2>/dev/null | \
+		xargs -r perl -pi -e 's,github\.com/crossplane/crossplane-runtime/(apis|pkg),github.com/crossplane/crossplane-runtime/v2/$$1,g'
+	@if echo " $(APIS_ONLY_SERVICES) " | grep -q " $(SVC) "; then \
+		rm -rf ./pkg/controller/$(SVC); \
+	fi
 
 services.all:
 	@$(MAKE) services SERVICES="$(GENERATED_SERVICES)"
