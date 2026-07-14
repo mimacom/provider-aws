@@ -5,6 +5,7 @@ on:
     branches:
       - mima
       - release-*
+      - mima-release-*
   pull_request: {}
   workflow_dispatch:
     inputs:
@@ -288,7 +289,7 @@ jobs:
     # requires all 'needs' jobs to succeed, so combined with the dispatch/version
     # gate below this job is the final, conditional step of the pipeline.
     needs: [check-diff, report-breaking-changes, lint, unit-tests, e2e-tests, codeql]
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != ''
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.version != '' && startsWith(github.ref, 'refs/heads/mima-release-')
     permissions:
       contents: write
       packages: write
