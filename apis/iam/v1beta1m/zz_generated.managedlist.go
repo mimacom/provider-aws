@@ -20,6 +20,15 @@ package v1beta1m
 
 import resource "github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 
+// GetItems of this AccessKeyList.
+func (l *AccessKeyList) GetItems() []resource.Managed {
+	items := make([]resource.Managed, len(l.Items))
+	for i := range l.Items {
+		items[i] = &l.Items[i]
+	}
+	return items
+}
+
 // GetItems of this PolicyList.
 func (l *PolicyList) GetItems() []resource.Managed {
 	items := make([]resource.Managed, len(l.Items))

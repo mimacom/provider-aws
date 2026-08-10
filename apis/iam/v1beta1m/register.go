@@ -18,9 +18,9 @@ limitations under the License.
 // +versionName=v1beta1
 
 // Package v1beta1m contains the namespaced (Crossplane v2) IAM managed
-// resources: User, Policy and UserPolicyAttachment. Their cluster-scoped
-// siblings (Role, Group, AccessKey, ...) remain in the iam.aws.crossplane.io
-// package.
+// resources: User, Policy, UserPolicyAttachment and AccessKey. Their
+// cluster-scoped siblings (Role, Group, ...) remain in the
+// iam.aws.crossplane.io package.
 package v1beta1m
 
 import (
@@ -68,8 +68,17 @@ var (
 	PolicyGroupVersionKind = SchemeGroupVersion.WithKind(PolicyKind)
 )
 
+// AccessKey type metadata.
+var (
+	AccessKeyKind             = reflect.TypeOf(AccessKey{}).Name()
+	AccessKeyGroupKind        = schema.GroupKind{Group: CRDGroup, Kind: AccessKeyKind}.String()
+	AccessKeyKindAPIVersion   = AccessKeyKind + "." + SchemeGroupVersion.String()
+	AccessKeyGroupVersionKind = SchemeGroupVersion.WithKind(AccessKeyKind)
+)
+
 func init() {
 	SchemeBuilder.Register(&User{}, &UserList{})
 	SchemeBuilder.Register(&Policy{}, &PolicyList{})
 	SchemeBuilder.Register(&UserPolicyAttachment{}, &UserPolicyAttachmentList{})
+	SchemeBuilder.Register(&AccessKey{}, &AccessKeyList{})
 }

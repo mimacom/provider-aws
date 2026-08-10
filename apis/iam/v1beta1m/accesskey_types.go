@@ -14,30 +14,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v1beta1m
 
 import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xpv2 "github.com/crossplane/crossplane-runtime/v2/apis/common/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // AccessKeyParameters define the desired state of an AWS IAM Access Key.
 type AccessKeyParameters struct {
 	// Username contains the name of the User.
-	// NOTE(mimacom): auto-resolution of the User reference was removed because
-	// User is now namespaced (iam.aws.m.crossplane.io) and this cluster-scoped
-	// resource cannot reference it cross-scope. Set userName explicitly.
 	// +optional
 	// +immutable
+	// +crossplane:generate:reference:type=User
 	Username string `json:"userName,omitempty"`
 
 	// UsernameRef references to an User to retrieve its userName
 	// +optional
-	UsernameRef *xpv1.Reference `json:"userNameRef,omitempty"`
+	UsernameRef *xpv1.NamespacedReference `json:"userNameRef,omitempty"`
 
 	// UsernameSelector selects a reference to an User to retrieve its userName
 	// +optional
-	UsernameSelector *xpv1.Selector `json:"userNameSelector,omitempty"`
+	UsernameSelector *xpv1.NamespacedSelector `json:"userNameSelector,omitempty"`
 
 	// The current status of this AccessKey on the AWS
 	// Must be either Active or Inactive.
@@ -47,8 +46,8 @@ type AccessKeyParameters struct {
 
 // An AccessKeySpec defines the desired state of an IAM Access Key.
 type AccessKeySpec struct {
-	xpv1.ResourceSpec `json:",inline"`
-	ForProvider       AccessKeyParameters `json:"forProvider"`
+	xpv2.ManagedResourceSpec `json:",inline"`
+	ForProvider              AccessKeyParameters `json:"forProvider"`
 }
 
 // AccessKeyStatus represents the observed state of an IAM Access Key.
@@ -58,13 +57,13 @@ type AccessKeyStatus struct {
 
 // +kubebuilder:object:root=true
 
-// An AccessKey is a managed resource that represents an the Access Key for an AWS IAM User.
+// An AccessKey is a namespaced managed resource that represents the Access Key for an AWS IAM User.
 // +kubebuilder:printcolumn:name="READY",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="SYNCED",type="string",JSONPath=".status.conditions[?(@.type=='Synced')].status"
 // +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:printcolumn:name="STATUS",type="string",JSONPath=".spec.forProvider.accessKeyStatus"
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,categories={crossplane,managed,aws}
+// +kubebuilder:resource:scope=Namespaced,categories={crossplane,managed,aws}
 type AccessKey struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

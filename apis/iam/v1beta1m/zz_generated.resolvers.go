@@ -25,6 +25,33 @@ import (
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// ResolveReferences of this AccessKey.
+func (mg *AccessKey) ResolveReferences(ctx context.Context, c client.Reader) error {
+	r := reference.NewAPINamespacedResolver(c, mg)
+
+	var rsp reference.NamespacedResolutionResponse
+	var err error
+
+	rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
+		CurrentValue: mg.Spec.ForProvider.Username,
+		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
+		Reference:    mg.Spec.ForProvider.UsernameRef,
+		Selector:     mg.Spec.ForProvider.UsernameSelector,
+		To: reference.To{
+			List:    &UserList{},
+			Managed: &User{},
+		},
+	})
+	if err != nil {
+		return errors.Wrap(err, "mg.Spec.ForProvider.Username")
+	}
+	mg.Spec.ForProvider.Username = rsp.ResolvedValue
+	mg.Spec.ForProvider.UsernameRef = rsp.ResolvedReference
+
+	return nil
+}
+
 // ResolveReferences of this UserPolicyAttachment.
 func (mg *UserPolicyAttachment) ResolveReferences(ctx context.Context, c client.Reader) error {
 	r := reference.NewAPINamespacedResolver(c, mg)
