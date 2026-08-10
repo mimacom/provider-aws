@@ -83,14 +83,6 @@ var (
 	GroupPolicyAttachmentGroupVersionKind = SchemeGroupVersion.WithKind(GroupPolicyAttachmentKind)
 )
 
-// AccessKey type metadata.
-var (
-	AccessKeyKind             = reflect.TypeOf(AccessKey{}).Name()
-	AccessKeyGroupKind        = schema.GroupKind{Group: CRDGroup, Kind: AccessKeyKind}.String()
-	AccessKeyKindAPIVersion   = AccessKeyKind + "." + SchemeGroupVersion.String()
-	AccessKeyGroupVersionKind = SchemeGroupVersion.WithKind(AccessKeyKind)
-)
-
 // OpenIDConnectProvider type metadata.
 var (
 	OpenIDConnectProviderKind             = "OpenIDConnectProvider"
@@ -114,6 +106,5 @@ func init() {
 	SchemeBuilder.Register(&Group{}, &GroupList{})
 	SchemeBuilder.Register(&GroupUserMembership{}, &GroupUserMembershipList{})
 	SchemeBuilder.Register(&GroupPolicyAttachment{}, &GroupPolicyAttachmentList{})
-	SchemeBuilder.Register(&AccessKey{}, &AccessKeyList{})
 	SchemeBuilder.Register(&OpenIDConnectProvider{}, &OpenIDConnectProviderList{})
 }

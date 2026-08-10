@@ -1,0 +1,20 @@
+---
+# A namespaced IAM AccessKey for the User below. The access key ID and secret
+# are written to the connection secret named in writeConnectionSecretToRef.
+apiVersion: iam.aws.m.crossplane.io/v1beta1
+kind: AccessKey
+metadata:
+  name: example-accesskey
+  namespace: default
+spec:
+  forProvider:
+    accessKeyStatus: Active
+    # Reference the namespaced User in the same namespace instead of hardcoding
+    # userName. Set spec.forProvider.userName directly to skip the reference.
+    userNameRef:
+      name: example-user
+  writeConnectionSecretToRef:
+    name: example-accesskey-creds
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
