@@ -38,14 +38,15 @@ import (
 	requestv1 "github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/smithy-go/middleware"
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/go-ini/ini"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/crossplane-contrib/provider-aws/apis/v1beta1"
+	v1beta1m "github.com/crossplane-contrib/provider-aws/apis/v1beta1m"
 	"github.com/crossplane-contrib/provider-aws/pkg/utils/metrics"
 	"github.com/crossplane-contrib/provider-aws/pkg/utils/pointer"
 	"github.com/crossplane-contrib/provider-aws/pkg/version"
@@ -97,24 +98,62 @@ var (
 )
 
 // GetConfig constructs an *aws.Config that can be used to authenticate to AWS
-// API by the AWS clients.
+// API by the AWS clients. Namespaced (modern) managed resources resolve
+// credentials from a namespaced ProviderConfig in their own namespace; legacy
+// cluster-scoped resources resolve from the cluster-scoped ProviderConfig.
 func GetConfig(ctx context.Context, c client.Client, mg resource.Managed, region string) (*aws.Config, error) {
+	if mmg, ok := mg.(resource.ModernManaged); ok {
+		return useProviderConfigNamespaced(ctx, c, mmg, region)
+	}
 	return UseProviderConfig(ctx, c, mg, region)
 }
 
-// UseProviderConfig to produce a config that can be used to authenticate to AWS.
-func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed, region string) (*aws.Config, error) { //nolint:gocyclo
+// UseProviderConfig produces a config from the cluster-scoped ProviderConfig
+// referenced by a legacy (cluster-scoped) managed resource.
+func UseProviderConfig(ctx context.Context, c client.Client, mg resource.Managed, region string) (*aws.Config, error) {
+	lmg, ok := mg.(resource.LegacyManaged)
+	if !ok {
+		return nil, errors.New("managed resource is not a legacy (cluster-scoped) managed resource")
+	}
 	pc := &v1beta1.ProviderConfig{}
-	if err := c.Get(ctx, types.NamespacedName{Name: mg.GetProviderConfigReference().Name}, pc); err != nil {
+	if err := c.Get(ctx, types.NamespacedName{Name: lmg.GetProviderConfigReference().Name}, pc); err != nil {
 		return nil, errors.Wrap(err, "cannot get referenced Provider")
 	}
 
-	t := resource.NewProviderConfigUsageTracker(c, &v1beta1.ProviderConfigUsage{})
+	t := resource.NewLegacyProviderConfigUsageTracker(c, &v1beta1.ProviderConfigUsage{})
+	if err := t.Track(ctx, lmg); err != nil {
+		return nil, errors.Wrap(err, "cannot track ProviderConfig usage")
+	}
+
+	return resolveAWSConfig(ctx, c, pc, region)
+}
+
+// useProviderConfigNamespaced produces a config from the namespaced
+// ProviderConfig referenced by a namespaced (modern) managed resource. The
+// ProviderConfig is looked up in the managed resource's own namespace.
+func useProviderConfigNamespaced(ctx context.Context, c client.Client, mg resource.ModernManaged, region string) (*aws.Config, error) {
+	ref := mg.GetProviderConfigReference()
+	if ref == nil {
+		return nil, errors.New("providerConfigRef cannot be empty")
+	}
+	nspc := &v1beta1m.ProviderConfig{}
+	if err := c.Get(ctx, types.NamespacedName{Namespace: mg.GetNamespace(), Name: ref.Name}, nspc); err != nil {
+		return nil, errors.Wrap(err, "cannot get referenced Provider")
+	}
+
+	t := resource.NewProviderConfigUsageTracker(c, &v1beta1m.ProviderConfigUsage{})
 	if err := t.Track(ctx, mg); err != nil {
 		return nil, errors.Wrap(err, "cannot track ProviderConfig usage")
 	}
 
-	switch s := pc.Spec.Credentials.Source; s { //nolint:exhaustive
+	// The namespaced ProviderConfig reuses the cluster ProviderConfig's Spec,
+	// so the resolution logic below is shared verbatim.
+	return resolveAWSConfig(ctx, c, &v1beta1.ProviderConfig{Spec: nspc.Spec}, region)
+}
+
+// resolveAWSConfig builds an *aws.Config from a (cluster-shaped) ProviderConfig.
+func resolveAWSConfig(ctx context.Context, c client.Client, pc *v1beta1.ProviderConfig, region string) (*aws.Config, error) { //nolint:gocyclo
+	switch s := pc.Spec.Credentials.Source; s {
 	case xpv1.CredentialsSourceInjectedIdentity:
 		if pc.Spec.AssumeRole != nil || pc.Spec.AssumeRoleARN != nil {
 			cfg, err := UsePodServiceAccountAssumeRole(ctx, []byte{}, DefaultSection, region, pc)
@@ -430,19 +469,23 @@ func UsePodServiceAccount(ctx context.Context, _ []byte, _, region string) (*aws
 // GetConfigV1 constructs an *awsv1.Config that can be used to authenticate to AWS
 // API by the AWSv1 clients.
 func GetConfigV1(ctx context.Context, c client.Client, mg resource.Managed, region string) (*session.Session, error) { //nolint:gocyclo
-	if mg.GetProviderConfigReference() == nil {
+	lmg, ok := mg.(resource.LegacyManaged)
+	if !ok {
+		return nil, errors.New("managed resource is not a legacy (cluster-scoped) managed resource")
+	}
+	if lmg.GetProviderConfigReference() == nil {
 		return nil, errors.New("providerConfigRef cannot be empty")
 	}
 	pc := &v1beta1.ProviderConfig{}
-	if err := c.Get(ctx, types.NamespacedName{Name: mg.GetProviderConfigReference().Name}, pc); err != nil {
+	if err := c.Get(ctx, types.NamespacedName{Name: lmg.GetProviderConfigReference().Name}, pc); err != nil {
 		return nil, errors.Wrap(err, "cannot get referenced ProviderConfig")
 	}
 
-	t := resource.NewProviderConfigUsageTracker(c, &v1beta1.ProviderConfigUsage{})
-	if err := t.Track(ctx, mg); err != nil {
+	t := resource.NewLegacyProviderConfigUsageTracker(c, &v1beta1.ProviderConfigUsage{})
+	if err := t.Track(ctx, lmg); err != nil {
 		return nil, errors.Wrap(err, "cannot track ProviderConfig usage")
 	}
-	switch s := pc.Spec.Credentials.Source; s { //nolint:exhaustive
+	switch s := pc.Spec.Credentials.Source; s {
 	case xpv1.CredentialsSourceInjectedIdentity:
 		if pc.Spec.AssumeRoleARN != nil || pc.Spec.AssumeRole != nil {
 			cfg, err := UsePodServiceAccountV1AssumeRole(ctx, []byte{}, pc, DefaultSection, region)

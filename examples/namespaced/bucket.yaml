@@ -1,0 +1,13 @@
+---
+# A namespaced S3 Bucket in an S3-compatible storage system.
+apiVersion: s3.aws.m.crossplane.io/v1beta1
+kind: Bucket
+metadata:
+  name: example-bucket
+  namespace: default
+spec:
+  forProvider:
+    locationConstraint: us-east-1
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig

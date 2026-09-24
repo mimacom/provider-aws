@@ -16,7 +16,7 @@ limitations under the License.
 
 package v1beta1
 
-import xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+import xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 
 // NotificationConfiguration specifies the notification configuration of the bucket.
 // If this element is empty, notifications are turned off for the bucket.
@@ -141,11 +141,11 @@ type QueueConfiguration struct {
 
 	// QueueArnRef references an Queue to retrieve its ARN
 	// +optional
-	QueueArnRef *xpv1.Reference `json:"queueArnRef,omitempty"`
+	QueueArnRef *xpv1.NamespacedReference `json:"queueArnRef,omitempty"`
 
 	// QueueArnSelector selects a reference to an Queue to retrieve its ARN
 	// +optional
-	QueueArnSelector *xpv1.Selector `json:"queueArnSelector,omitempty"`
+	QueueArnSelector *xpv1.NamespacedSelector `json:"queueArnSelector,omitempty"`
 }
 
 // TopicConfiguration specifies the configuration for publication of messages
@@ -181,11 +181,11 @@ type TopicConfiguration struct {
 
 	// TopicArnRef references an SNS Topic to retrieve its Arn
 	// +optional
-	TopicArnRef *xpv1.Reference `json:"topicRef,omitempty"`
+	TopicArnRef *xpv1.NamespacedReference `json:"topicRef,omitempty"`
 
 	// TopicArnSelector selects a reference to an SNS Topic to retrieve its Arn
 	// +optional
-	TopicArnSelector *xpv1.Selector `json:"topicSelector,omitempty"`
+	TopicArnSelector *xpv1.NamespacedSelector `json:"topicSelector,omitempty"`
 }
 
 // NotificationConfigurationFilter specifies object key name filtering rules. For information about key name

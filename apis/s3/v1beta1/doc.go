@@ -16,6 +16,6 @@ limitations under the License.
 
 // Package v1beta1 contains managed resources for AWS S3.
 // +kubebuilder:object:generate=true
-// +groupName=s3.aws.crossplane.io
+// +groupName=s3.aws.m.crossplane.io
 // +versionName=v1beta1
 package v1beta1

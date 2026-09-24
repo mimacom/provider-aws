@@ -1,4 +1,0 @@
-ignore:
-  resource_names:
-    - Permission
-    - PermissionVersion
