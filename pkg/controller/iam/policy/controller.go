@@ -24,19 +24,17 @@ import (
 	awsiam "github.com/aws/aws-sdk-go-v2/service/iam"
 	awsiamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/connection"
-	"github.com/crossplane/crossplane-runtime/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/pkg/event"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
-	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
-	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1"
-	"github.com/crossplane-contrib/provider-aws/apis/v1alpha1"
+	iamv1beta1m "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1m"
 	"github.com/crossplane-contrib/provider-aws/pkg/clients/iam"
 	"github.com/crossplane-contrib/provider-aws/pkg/features"
 	connectaws "github.com/crossplane-contrib/provider-aws/pkg/utils/connect/aws"
@@ -63,22 +61,15 @@ const (
 
 // SetupPolicy adds a controller that reconciles IAM Policy.
 func SetupPolicy(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1beta1.PolicyGroupKind)
-
-	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
-	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {
-		cps = append(cps, connection.NewDetailsManager(mgr.GetClient(), v1alpha1.StoreConfigGroupVersionKind))
-	}
+	name := managed.ControllerName(iamv1beta1m.PolicyGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithCriticalAnnotationUpdater(custommanaged.NewRetryingCriticalAnnotationUpdater(mgr.GetClient())),
 		managed.WithExternalConnecter(&connector{kube: mgr.GetClient(), newClientFn: iam.NewPolicyClient, newSTSClientFn: iam.NewSTSClient}),
-		managed.WithConnectionPublishers(),
 		managed.WithInitializers(),
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-		managed.WithConnectionPublishers(cps...),
 	}
 
 	if o.Features.Enabled(features.EnableAlphaManagementPolicies) {
@@ -86,14 +77,14 @@ func SetupPolicy(mgr ctrl.Manager, o controller.Options) error {
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1beta1.PolicyGroupVersionKind),
+		resource.ManagedKind(iamv1beta1m.PolicyGroupVersionKind),
 		reconcilerOpts...)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		WithOptions(o.ForControllerRuntime()).
 		WithEventFilter(resource.DesiredStateChanged()).
-		For(&v1beta1.Policy{}).
+		For(&iamv1beta1m.Policy{}).
 		Complete(r)
 }
 
@@ -118,7 +109,7 @@ type external struct {
 }
 
 func (e *external) Observe(ctx context.Context, mgd resource.Managed) (managed.ExternalObservation, error) { //nolint:gocyclo
-	cr, ok := mgd.(*v1beta1.Policy)
+	cr, ok := mgd.(*iamv1beta1m.Policy)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errUnexpectedObject)
 	}
@@ -149,7 +140,7 @@ func (e *external) Observe(ctx context.Context, mgd resource.Managed) (managed.E
 
 	cr.SetConditions(xpv1.Available())
 
-	cr.Status.AtProvider = v1beta1.PolicyObservation{
+	cr.Status.AtProvider = iamv1beta1m.PolicyObservation{
 		ARN:                           aws.ToString(policy.Arn),
 		AttachmentCount:               aws.ToInt32(policy.AttachmentCount),
 		DefaultVersionID:              aws.ToString(policy.DefaultVersionId),
@@ -187,7 +178,7 @@ func (e *external) Observe(ctx context.Context, mgd resource.Managed) (managed.E
 }
 
 func (e *external) Create(ctx context.Context, mgd resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mgd.(*v1beta1.Policy)
+	cr, ok := mgd.(*iamv1beta1m.Policy)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errUnexpectedObject)
 	}
@@ -219,7 +210,7 @@ func (e *external) Create(ctx context.Context, mgd resource.Managed) (managed.Ex
 }
 
 func (e *external) Update(ctx context.Context, mgd resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mgd.(*v1beta1.Policy)
+	cr, ok := mgd.(*iamv1beta1m.Policy)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errUnexpectedObject)
 	}
@@ -274,7 +265,7 @@ func (e *external) Update(ctx context.Context, mgd resource.Managed) (managed.Ex
 }
 
 func (e *external) Delete(ctx context.Context, mgd resource.Managed) (managed.ExternalDelete, error) {
-	cr, ok := mgd.(*v1beta1.Policy)
+	cr, ok := mgd.(*iamv1beta1m.Policy)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errUnexpectedObject)
 	}

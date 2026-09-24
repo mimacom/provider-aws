@@ -17,7 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,9 +26,10 @@ type GroupPolicyAttachmentParameters struct {
 
 	// PolicyARN is the Amazon Resource Name (ARN) of the IAM policy you want to
 	// attach.
+	// NOTE(mimacom): auto-resolution of the Policy reference was removed because
+	// Policy is now namespaced (iam.aws.m.crossplane.io) and this cluster-scoped
+	// resource cannot reference it cross-scope. Set policyArn explicitly.
 	// +immutable
-	// +crossplane:generate:reference:type=Policy
-	// +crossplane:generate:reference:extractor=PolicyARN()
 	PolicyARN string `json:"policyArn,omitempty"`
 
 	// PolicyARNRef references a Policy to retrieve its Policy ARN.

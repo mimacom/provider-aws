@@ -8,6 +8,7 @@ import (
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 
 	"github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1"
+	iamv1beta1m "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1m"
 	"github.com/crossplane-contrib/provider-aws/pkg/utils/pointer"
 )
 
@@ -30,7 +31,7 @@ func NewUserClient(cfg aws.Config) UserClient {
 
 // LateInitializeUser fills the empty fields in *v1alpha1.User with
 // the values seen in iam.User.
-func LateInitializeUser(in *v1beta1.UserParameters, user *iamtypes.User) {
+func LateInitializeUser(in *iamv1beta1m.UserParameters, user *iamtypes.User) {
 	if user == nil {
 		return
 	}

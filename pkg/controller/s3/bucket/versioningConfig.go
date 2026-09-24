@@ -21,7 +21,7 @@ import (
 
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	awss3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
 
 	"github.com/crossplane-contrib/provider-aws/apis/s3/v1beta1"
 	"github.com/crossplane-contrib/provider-aws/pkg/clients/s3"
