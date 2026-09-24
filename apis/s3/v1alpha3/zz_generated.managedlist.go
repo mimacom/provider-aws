@@ -18,7 +18,7 @@ limitations under the License.
 
 package v1alpha3
 
-import resource "github.com/crossplane/crossplane-runtime/pkg/resource"
+import resource "github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 
 // GetItems of this BucketPolicyList.
 func (l *BucketPolicyList) GetItems() []resource.Managed {

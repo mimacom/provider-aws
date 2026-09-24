@@ -24,23 +24,24 @@ import (
 	v1alpha1 "github.com/crossplane-contrib/provider-aws/apis/kms/v1alpha1"
 	v1beta12 "github.com/crossplane-contrib/provider-aws/apis/sns/v1beta1"
 	v1beta11 "github.com/crossplane-contrib/provider-aws/apis/sqs/v1beta1"
-	reference "github.com/crossplane/crossplane-runtime/pkg/reference"
+	reference "github.com/crossplane/crossplane-runtime/v2/pkg/reference"
 	errors "github.com/pkg/errors"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ResolveReferences of this Bucket.
 func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error {
-	r := reference.NewAPIResolver(c, mg)
+	r := reference.NewAPINamespacedResolver(c, mg)
 
-	var rsp reference.ResolutionResponse
+	var rsp reference.NamespacedResolutionResponse
 	var err error
 
 	if mg.Spec.ForProvider.ServerSideEncryptionConfiguration != nil {
 		for i4 := 0; i4 < len(mg.Spec.ForProvider.ServerSideEncryptionConfiguration.Rules); i4++ {
-			rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+			rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 				CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.ServerSideEncryptionConfiguration.Rules[i4].ApplyServerSideEncryptionByDefault.KMSMasterKeyID),
 				Extract:      reference.ExternalName(),
+				Namespace:    mg.GetNamespace(),
 				Reference:    mg.Spec.ForProvider.ServerSideEncryptionConfiguration.Rules[i4].ApplyServerSideEncryptionByDefault.KMSMasterKeyIDRef,
 				Selector:     mg.Spec.ForProvider.ServerSideEncryptionConfiguration.Rules[i4].ApplyServerSideEncryptionByDefault.KMSMasterKeyIDSelector,
 				To: reference.To{
@@ -57,9 +58,10 @@ func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error 
 		}
 	}
 	if mg.Spec.ForProvider.LoggingConfiguration != nil {
-		rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+		rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 			CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.LoggingConfiguration.TargetBucket),
 			Extract:      reference.ExternalName(),
+			Namespace:    mg.GetNamespace(),
 			Reference:    mg.Spec.ForProvider.LoggingConfiguration.TargetBucketRef,
 			Selector:     mg.Spec.ForProvider.LoggingConfiguration.TargetBucketSelector,
 			To: reference.To{
@@ -75,9 +77,10 @@ func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error 
 
 	}
 	if mg.Spec.ForProvider.ReplicationConfiguration != nil {
-		rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+		rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 			CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.ReplicationConfiguration.Role),
 			Extract:      v1beta1.RoleARN(),
+			Namespace:    mg.GetNamespace(),
 			Reference:    mg.Spec.ForProvider.ReplicationConfiguration.RoleRef,
 			Selector:     mg.Spec.ForProvider.ReplicationConfiguration.RoleSelector,
 			To: reference.To{
@@ -94,9 +97,10 @@ func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error 
 	}
 	if mg.Spec.ForProvider.ReplicationConfiguration != nil {
 		for i4 := 0; i4 < len(mg.Spec.ForProvider.ReplicationConfiguration.Rules); i4++ {
-			rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+			rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 				CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.ReplicationConfiguration.Rules[i4].Destination.Bucket),
 				Extract:      BucketARN(),
+				Namespace:    mg.GetNamespace(),
 				Reference:    mg.Spec.ForProvider.ReplicationConfiguration.Rules[i4].Destination.BucketRef,
 				Selector:     mg.Spec.ForProvider.ReplicationConfiguration.Rules[i4].Destination.BucketSelector,
 				To: reference.To{
@@ -115,9 +119,10 @@ func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error 
 	if mg.Spec.ForProvider.ReplicationConfiguration != nil {
 		for i4 := 0; i4 < len(mg.Spec.ForProvider.ReplicationConfiguration.Rules); i4++ {
 			if mg.Spec.ForProvider.ReplicationConfiguration.Rules[i4].Destination.EncryptionConfiguration != nil {
-				rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+				rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 					CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.ReplicationConfiguration.Rules[i4].Destination.EncryptionConfiguration.ReplicaKmsKeyID),
 					Extract:      reference.ExternalName(),
+					Namespace:    mg.GetNamespace(),
 					Reference:    mg.Spec.ForProvider.ReplicationConfiguration.Rules[i4].Destination.EncryptionConfiguration.ReplicaKmsKeyIDRef,
 					Selector:     mg.Spec.ForProvider.ReplicationConfiguration.Rules[i4].Destination.EncryptionConfiguration.ReplicaKmsKeyIDSelector,
 					To: reference.To{
@@ -136,9 +141,10 @@ func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error 
 	}
 	if mg.Spec.ForProvider.NotificationConfiguration != nil {
 		for i4 := 0; i4 < len(mg.Spec.ForProvider.NotificationConfiguration.QueueConfigurations); i4++ {
-			rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+			rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 				CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.NotificationConfiguration.QueueConfigurations[i4].QueueArn),
 				Extract:      v1beta11.QueueARN(),
+				Namespace:    mg.GetNamespace(),
 				Reference:    mg.Spec.ForProvider.NotificationConfiguration.QueueConfigurations[i4].QueueArnRef,
 				Selector:     mg.Spec.ForProvider.NotificationConfiguration.QueueConfigurations[i4].QueueArnSelector,
 				To: reference.To{
@@ -156,9 +162,10 @@ func (mg *Bucket) ResolveReferences(ctx context.Context, c client.Reader) error 
 	}
 	if mg.Spec.ForProvider.NotificationConfiguration != nil {
 		for i4 := 0; i4 < len(mg.Spec.ForProvider.NotificationConfiguration.TopicConfigurations); i4++ {
-			rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
+			rsp, err = r.Resolve(ctx, reference.NamespacedResolutionRequest{
 				CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.NotificationConfiguration.TopicConfigurations[i4].TopicArn),
 				Extract:      v1beta12.SNSTopicARN(),
+				Namespace:    mg.GetNamespace(),
 				Reference:    mg.Spec.ForProvider.NotificationConfiguration.TopicConfigurations[i4].TopicArnRef,
 				Selector:     mg.Spec.ForProvider.NotificationConfiguration.TopicConfigurations[i4].TopicArnSelector,
 				To: reference.To{

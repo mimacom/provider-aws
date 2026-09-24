@@ -56,29 +56,8 @@ var (
 	RolePolicyAttachmentGroupVersionKind = SchemeGroupVersion.WithKind(RolePolicyAttachmentKind)
 )
 
-// User type metadata.
-var (
-	UserKind             = reflect.TypeOf(User{}).Name()
-	UserGroupKind        = schema.GroupKind{Group: CRDGroup, Kind: UserKind}.String()
-	UserKindAPIVersion   = UserKind + "." + SchemeGroupVersion.String()
-	UserGroupVersionKind = SchemeGroupVersion.WithKind(UserKind)
-)
-
-// UserPolicyAttachment type metadata.
-var (
-	UserPolicyAttachmentKind             = reflect.TypeOf(UserPolicyAttachment{}).Name()
-	UserPolicyAttachmentGroupKind        = schema.GroupKind{Group: CRDGroup, Kind: UserPolicyAttachmentKind}.String()
-	UserPolicyAttachmentKindAPIVersion   = UserPolicyAttachmentKind + "." + SchemeGroupVersion.String()
-	UserPolicyAttachmentGroupVersionKind = SchemeGroupVersion.WithKind(UserPolicyAttachmentKind)
-)
-
-// Policy type metadata.
-var (
-	PolicyKind             = reflect.TypeOf(Policy{}).Name()
-	PolicyGroupKind        = schema.GroupKind{Group: CRDGroup, Kind: PolicyKind}.String()
-	PolicyKindAPIVersion   = PolicyKind + "." + SchemeGroupVersion.String()
-	PolicyGroupVersionKind = SchemeGroupVersion.WithKind(PolicyKind)
-)
+// NOTE(mimacom): User, Policy and UserPolicyAttachment have been moved to the
+// namespaced iam.aws.m.crossplane.io package (apis/iam/v1beta1m).
 
 // Group type metadata
 var (
@@ -104,14 +83,6 @@ var (
 	GroupPolicyAttachmentGroupVersionKind = SchemeGroupVersion.WithKind(GroupPolicyAttachmentKind)
 )
 
-// AccessKey type metadata.
-var (
-	AccessKeyKind             = reflect.TypeOf(AccessKey{}).Name()
-	AccessKeyGroupKind        = schema.GroupKind{Group: CRDGroup, Kind: AccessKeyKind}.String()
-	AccessKeyKindAPIVersion   = AccessKeyKind + "." + SchemeGroupVersion.String()
-	AccessKeyGroupVersionKind = SchemeGroupVersion.WithKind(AccessKeyKind)
-)
-
 // OpenIDConnectProvider type metadata.
 var (
 	OpenIDConnectProviderKind             = "OpenIDConnectProvider"
@@ -132,12 +103,8 @@ func init() {
 	SchemeBuilder.Register(&Role{}, &RoleList{})
 	SchemeBuilder.Register(&RolePolicy{}, &RolePolicyList{})
 	SchemeBuilder.Register(&RolePolicyAttachment{}, &RolePolicyAttachmentList{})
-	SchemeBuilder.Register(&User{}, &UserList{})
-	SchemeBuilder.Register(&Policy{}, &PolicyList{})
-	SchemeBuilder.Register(&UserPolicyAttachment{}, &UserPolicyAttachmentList{})
 	SchemeBuilder.Register(&Group{}, &GroupList{})
 	SchemeBuilder.Register(&GroupUserMembership{}, &GroupUserMembershipList{})
 	SchemeBuilder.Register(&GroupPolicyAttachment{}, &GroupPolicyAttachmentList{})
-	SchemeBuilder.Register(&AccessKey{}, &AccessKeyList{})
 	SchemeBuilder.Register(&OpenIDConnectProvider{}, &OpenIDConnectProviderList{})
 }

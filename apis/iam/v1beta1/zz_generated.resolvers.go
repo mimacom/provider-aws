@@ -20,36 +20,10 @@ package v1beta1
 
 import (
 	"context"
-	reference "github.com/crossplane/crossplane-runtime/pkg/reference"
+	reference "github.com/crossplane/crossplane-runtime/v2/pkg/reference"
 	errors "github.com/pkg/errors"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-// ResolveReferences of this AccessKey.
-func (mg *AccessKey) ResolveReferences(ctx context.Context, c client.Reader) error {
-	r := reference.NewAPIResolver(c, mg)
-
-	var rsp reference.ResolutionResponse
-	var err error
-
-	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
-		CurrentValue: mg.Spec.ForProvider.Username,
-		Extract:      reference.ExternalName(),
-		Reference:    mg.Spec.ForProvider.UsernameRef,
-		Selector:     mg.Spec.ForProvider.UsernameSelector,
-		To: reference.To{
-			List:    &UserList{},
-			Managed: &User{},
-		},
-	})
-	if err != nil {
-		return errors.Wrap(err, "mg.Spec.ForProvider.Username")
-	}
-	mg.Spec.ForProvider.Username = rsp.ResolvedValue
-	mg.Spec.ForProvider.UsernameRef = rsp.ResolvedReference
-
-	return nil
-}
 
 // ResolveReferences of this GroupPolicyAttachment.
 func (mg *GroupPolicyAttachment) ResolveReferences(ctx context.Context, c client.Reader) error {
@@ -59,24 +33,9 @@ func (mg *GroupPolicyAttachment) ResolveReferences(ctx context.Context, c client
 	var err error
 
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
-		CurrentValue: mg.Spec.ForProvider.PolicyARN,
-		Extract:      PolicyARN(),
-		Reference:    mg.Spec.ForProvider.PolicyARNRef,
-		Selector:     mg.Spec.ForProvider.PolicyARNSelector,
-		To: reference.To{
-			List:    &PolicyList{},
-			Managed: &Policy{},
-		},
-	})
-	if err != nil {
-		return errors.Wrap(err, "mg.Spec.ForProvider.PolicyARN")
-	}
-	mg.Spec.ForProvider.PolicyARN = rsp.ResolvedValue
-	mg.Spec.ForProvider.PolicyARNRef = rsp.ResolvedReference
-
-	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.GroupName,
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.GroupNameRef,
 		Selector:     mg.Spec.ForProvider.GroupNameSelector,
 		To: reference.To{
@@ -103,6 +62,7 @@ func (mg *GroupUserMembership) ResolveReferences(ctx context.Context, c client.R
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.GroupName,
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.GroupNameRef,
 		Selector:     mg.Spec.ForProvider.GroupNameSelector,
 		To: reference.To{
@@ -115,22 +75,6 @@ func (mg *GroupUserMembership) ResolveReferences(ctx context.Context, c client.R
 	}
 	mg.Spec.ForProvider.GroupName = rsp.ResolvedValue
 	mg.Spec.ForProvider.GroupNameRef = rsp.ResolvedReference
-
-	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
-		CurrentValue: mg.Spec.ForProvider.UserName,
-		Extract:      reference.ExternalName(),
-		Reference:    mg.Spec.ForProvider.UserNameRef,
-		Selector:     mg.Spec.ForProvider.UserNameSelector,
-		To: reference.To{
-			List:    &UserList{},
-			Managed: &User{},
-		},
-	})
-	if err != nil {
-		return errors.Wrap(err, "mg.Spec.ForProvider.UserName")
-	}
-	mg.Spec.ForProvider.UserName = rsp.ResolvedValue
-	mg.Spec.ForProvider.UserNameRef = rsp.ResolvedReference
 
 	return nil
 }
@@ -145,6 +89,7 @@ func (mg *RolePolicy) ResolveReferences(ctx context.Context, c client.Reader) er
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.RoleName,
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.RoleNameRef,
 		Selector:     mg.Spec.ForProvider.RoleNameSelector,
 		To: reference.To{
@@ -169,24 +114,9 @@ func (mg *RolePolicyAttachment) ResolveReferences(ctx context.Context, c client.
 	var err error
 
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
-		CurrentValue: mg.Spec.ForProvider.PolicyARN,
-		Extract:      PolicyARN(),
-		Reference:    mg.Spec.ForProvider.PolicyARNRef,
-		Selector:     mg.Spec.ForProvider.PolicyARNSelector,
-		To: reference.To{
-			List:    &PolicyList{},
-			Managed: &Policy{},
-		},
-	})
-	if err != nil {
-		return errors.Wrap(err, "mg.Spec.ForProvider.PolicyARN")
-	}
-	mg.Spec.ForProvider.PolicyARN = rsp.ResolvedValue
-	mg.Spec.ForProvider.PolicyARNRef = rsp.ResolvedReference
-
-	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: mg.Spec.ForProvider.RoleName,
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.RoleNameRef,
 		Selector:     mg.Spec.ForProvider.RoleNameSelector,
 		To: reference.To{
@@ -199,48 +129,6 @@ func (mg *RolePolicyAttachment) ResolveReferences(ctx context.Context, c client.
 	}
 	mg.Spec.ForProvider.RoleName = rsp.ResolvedValue
 	mg.Spec.ForProvider.RoleNameRef = rsp.ResolvedReference
-
-	return nil
-}
-
-// ResolveReferences of this UserPolicyAttachment.
-func (mg *UserPolicyAttachment) ResolveReferences(ctx context.Context, c client.Reader) error {
-	r := reference.NewAPIResolver(c, mg)
-
-	var rsp reference.ResolutionResponse
-	var err error
-
-	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
-		CurrentValue: mg.Spec.ForProvider.PolicyARN,
-		Extract:      PolicyARN(),
-		Reference:    mg.Spec.ForProvider.PolicyARNRef,
-		Selector:     mg.Spec.ForProvider.PolicyARNSelector,
-		To: reference.To{
-			List:    &PolicyList{},
-			Managed: &Policy{},
-		},
-	})
-	if err != nil {
-		return errors.Wrap(err, "mg.Spec.ForProvider.PolicyARN")
-	}
-	mg.Spec.ForProvider.PolicyARN = rsp.ResolvedValue
-	mg.Spec.ForProvider.PolicyARNRef = rsp.ResolvedReference
-
-	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
-		CurrentValue: mg.Spec.ForProvider.UserName,
-		Extract:      reference.ExternalName(),
-		Reference:    mg.Spec.ForProvider.UserNameRef,
-		Selector:     mg.Spec.ForProvider.UserNameSelector,
-		To: reference.To{
-			List:    &UserList{},
-			Managed: &User{},
-		},
-	})
-	if err != nil {
-		return errors.Wrap(err, "mg.Spec.ForProvider.UserName")
-	}
-	mg.Spec.ForProvider.UserName = rsp.ResolvedValue
-	mg.Spec.ForProvider.UserNameRef = rsp.ResolvedReference
 
 	return nil
 }
