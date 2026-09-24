@@ -16,7 +16,7 @@ limitations under the License.
 
 package v1beta1
 
-import xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+import xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 
 // ServerSideEncryptionConfiguration specifies the default server-side-encryption configuration.
 type ServerSideEncryptionConfiguration struct {
@@ -70,11 +70,11 @@ type ServerSideEncryptionByDefault struct {
 
 	// KMSMasterKeyIDRef references an KMSKey to retrieve its ID
 	// +optional
-	KMSMasterKeyIDRef *xpv1.Reference `json:"kmsMasterKeyIdRef,omitempty"`
+	KMSMasterKeyIDRef *xpv1.NamespacedReference `json:"kmsMasterKeyIdRef,omitempty"`
 
 	// KMSMasterKeyIDSelector selects a reference to an KMSKey to retrieve its ID
 	// +optional
-	KMSMasterKeyIDSelector *xpv1.Selector `json:"kmsMasterKeyIdSelector,omitempty"`
+	KMSMasterKeyIDSelector *xpv1.NamespacedSelector `json:"kmsMasterKeyIdSelector,omitempty"`
 
 	// NOTE(muvaf): aws:kms is not accepted by kubebuilder enum.
 

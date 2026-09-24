@@ -21,8 +21,8 @@ import (
 
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	awss3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
-	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
 

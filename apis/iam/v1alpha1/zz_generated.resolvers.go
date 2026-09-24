@@ -21,7 +21,7 @@ package v1alpha1
 import (
 	"context"
 	v1beta1 "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1"
-	reference "github.com/crossplane/crossplane-runtime/pkg/reference"
+	reference "github.com/crossplane/crossplane-runtime/v2/pkg/reference"
 	errors "github.com/pkg/errors"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -36,6 +36,7 @@ func (mg *InstanceProfile) ResolveReferences(ctx context.Context, c client.Reade
 	rsp, err = r.Resolve(ctx, reference.ResolutionRequest{
 		CurrentValue: reference.FromPtrValue(mg.Spec.ForProvider.CustomInstanceProfileParameters.Role),
 		Extract:      reference.ExternalName(),
+		Namespace:    mg.GetNamespace(),
 		Reference:    mg.Spec.ForProvider.CustomInstanceProfileParameters.RoleRef,
 		Selector:     mg.Spec.ForProvider.CustomInstanceProfileParameters.RoleSelector,
 		To: reference.To{

@@ -1,0 +1,36 @@
+---
+# Namespaced credentials Secret for the S3-compatible storage system.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: s3-creds
+  namespace: default
+type: Opaque
+stringData:
+  # AWS-style shared credentials file. Replace with your S3-compatible
+  # access key / secret key.
+  credentials: |
+    [default]
+    aws_access_key_id = REPLACE_WITH_ACCESS_KEY
+    aws_secret_access_key = REPLACE_WITH_SECRET_KEY
+---
+# Namespaced ProviderConfig (Crossplane v2). It is looked up in the same
+# namespace as the managed resources that reference it. The endpoint points at
+# the S3-compatible storage system.
+apiVersion: aws.m.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+  namespace: default
+spec:
+  endpoint:
+    hostnameImmutable: true
+    url:
+      type: Static
+      static: https://s3.your-storage.example  # <-- your S3-compatible endpoint
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: default
+      name: s3-creds
+      key: credentials

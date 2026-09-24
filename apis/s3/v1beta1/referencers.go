@@ -17,8 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
-	reference "github.com/crossplane/crossplane-runtime/pkg/reference"
-	resource "github.com/crossplane/crossplane-runtime/pkg/resource"
+	reference "github.com/crossplane/crossplane-runtime/v2/pkg/reference"
+	resource "github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 )
 
 // BucketARN returns a function that returns the ARN of the given S3 Bucket

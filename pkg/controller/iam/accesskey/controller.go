@@ -22,19 +22,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsiam "github.com/aws/aws-sdk-go-v2/service/iam"
 	awsiamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/connection"
-	"github.com/crossplane/crossplane-runtime/pkg/controller"
-	"github.com/crossplane/crossplane-runtime/pkg/event"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
-	"github.com/crossplane/crossplane-runtime/pkg/reconciler/managed"
-	"github.com/crossplane/crossplane-runtime/pkg/resource"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/controller"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/event"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/reconciler/managed"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource"
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1"
-	"github.com/crossplane-contrib/provider-aws/apis/v1alpha1"
+	iamv1beta1m "github.com/crossplane-contrib/provider-aws/apis/iam/v1beta1m"
 	"github.com/crossplane-contrib/provider-aws/pkg/clients/iam"
 	"github.com/crossplane-contrib/provider-aws/pkg/features"
 	connectaws "github.com/crossplane-contrib/provider-aws/pkg/utils/connect/aws"
@@ -53,12 +51,7 @@ const (
 
 // SetupAccessKey adds a controller that reconciles AccessKeys.
 func SetupAccessKey(mgr ctrl.Manager, o controller.Options) error {
-	name := managed.ControllerName(v1beta1.AccessKeyGroupKind)
-
-	cps := []managed.ConnectionPublisher{managed.NewAPISecretPublisher(mgr.GetClient(), mgr.GetScheme())}
-	if o.Features.Enabled(features.EnableAlphaExternalSecretStores) {
-		cps = append(cps, connection.NewDetailsManager(mgr.GetClient(), v1alpha1.StoreConfigGroupVersionKind))
-	}
+	name := managed.ControllerName(iamv1beta1m.AccessKeyGroupKind)
 
 	reconcilerOpts := []managed.ReconcilerOption{
 		managed.WithCriticalAnnotationUpdater(custommanaged.NewRetryingCriticalAnnotationUpdater(mgr.GetClient())),
@@ -67,7 +60,6 @@ func SetupAccessKey(mgr ctrl.Manager, o controller.Options) error {
 		managed.WithPollInterval(o.PollInterval),
 		managed.WithLogger(o.Logger.WithValues("controller", name)),
 		managed.WithRecorder(event.NewAPIRecorder(mgr.GetEventRecorderFor(name))),
-		managed.WithConnectionPublishers(cps...),
 	}
 
 	if o.Features.Enabled(features.EnableAlphaManagementPolicies) {
@@ -75,14 +67,14 @@ func SetupAccessKey(mgr ctrl.Manager, o controller.Options) error {
 	}
 
 	r := managed.NewReconciler(mgr,
-		resource.ManagedKind(v1beta1.AccessKeyGroupVersionKind),
+		resource.ManagedKind(iamv1beta1m.AccessKeyGroupVersionKind),
 		reconcilerOpts...)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
 		WithOptions(o.ForControllerRuntime()).
 		WithEventFilter(resource.DesiredStateChanged()).
-		For(&v1beta1.AccessKey{}).
+		For(&iamv1beta1m.AccessKey{}).
 		Complete(r)
 }
 
@@ -105,7 +97,7 @@ type external struct {
 }
 
 func (e *external) Observe(ctx context.Context, mgd resource.Managed) (managed.ExternalObservation, error) {
-	cr, ok := mgd.(*v1beta1.AccessKey)
+	cr, ok := mgd.(*iamv1beta1m.AccessKey)
 	if !ok {
 		return managed.ExternalObservation{}, errors.New(errUnexpectedObject)
 	}
@@ -145,7 +137,7 @@ func (e *external) Observe(ctx context.Context, mgd resource.Managed) (managed.E
 }
 
 func (e *external) Create(ctx context.Context, mgd resource.Managed) (managed.ExternalCreation, error) {
-	cr, ok := mgd.(*v1beta1.AccessKey)
+	cr, ok := mgd.(*iamv1beta1m.AccessKey)
 	if !ok {
 		return managed.ExternalCreation{}, errors.New(errUnexpectedObject)
 	}
@@ -167,7 +159,7 @@ func (e *external) Create(ctx context.Context, mgd resource.Managed) (managed.Ex
 }
 
 func (e *external) Update(ctx context.Context, mgd resource.Managed) (managed.ExternalUpdate, error) {
-	cr, ok := mgd.(*v1beta1.AccessKey)
+	cr, ok := mgd.(*iamv1beta1m.AccessKey)
 	if !ok {
 		return managed.ExternalUpdate{}, errors.New(errUnexpectedObject)
 	}
@@ -182,7 +174,7 @@ func (e *external) Update(ctx context.Context, mgd resource.Managed) (managed.Ex
 }
 
 func (e *external) Delete(ctx context.Context, mgd resource.Managed) (managed.ExternalDelete, error) {
-	cr, ok := mgd.(*v1beta1.AccessKey)
+	cr, ok := mgd.(*iamv1beta1m.AccessKey)
 	if !ok {
 		return managed.ExternalDelete{}, errors.New(errUnexpectedObject)
 	}

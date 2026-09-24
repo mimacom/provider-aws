@@ -18,7 +18,7 @@ limitations under the License.
 
 package v1alpha3
 
-import xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+import xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
 
 // GetCondition of this BucketPolicy.
 func (mg *BucketPolicy) GetCondition(ct xpv1.ConditionType) xpv1.Condition {
@@ -38,11 +38,6 @@ func (mg *BucketPolicy) GetManagementPolicies() xpv1.ManagementPolicies {
 // GetProviderConfigReference of this BucketPolicy.
 func (mg *BucketPolicy) GetProviderConfigReference() *xpv1.Reference {
 	return mg.Spec.ProviderConfigReference
-}
-
-// GetPublishConnectionDetailsTo of this BucketPolicy.
-func (mg *BucketPolicy) GetPublishConnectionDetailsTo() *xpv1.PublishConnectionDetailsTo {
-	return mg.Spec.PublishConnectionDetailsTo
 }
 
 // GetWriteConnectionSecretToReference of this BucketPolicy.
@@ -68,11 +63,6 @@ func (mg *BucketPolicy) SetManagementPolicies(r xpv1.ManagementPolicies) {
 // SetProviderConfigReference of this BucketPolicy.
 func (mg *BucketPolicy) SetProviderConfigReference(r *xpv1.Reference) {
 	mg.Spec.ProviderConfigReference = r
-}
-
-// SetPublishConnectionDetailsTo of this BucketPolicy.
-func (mg *BucketPolicy) SetPublishConnectionDetailsTo(r *xpv1.PublishConnectionDetailsTo) {
-	mg.Spec.PublishConnectionDetailsTo = r
 }
 
 // SetWriteConnectionSecretToReference of this BucketPolicy.

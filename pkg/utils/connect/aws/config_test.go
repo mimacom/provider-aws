@@ -24,9 +24,9 @@ import (
 
 	stscreds "github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	stscredstypesv2 "github.com/aws/aws-sdk-go-v2/service/sts/types"
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/resource/fake"
-	"github.com/crossplane/crossplane-runtime/pkg/test"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/resource/fake"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/test"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	. "github.com/onsi/gomega"
@@ -471,8 +471,8 @@ func TestUseProviderConfigResolveEndpoint(t *testing.T) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			mg := fake.Managed{
-				ProviderConfigReferencer: fake.ProviderConfigReferencer{
+			mg := fake.LegacyManaged{
+				LegacyProviderConfigReferencer: fake.LegacyProviderConfigReferencer{
 					Ref: &xpv1.Reference{Name: providerConfigReferenceName},
 				},
 			}

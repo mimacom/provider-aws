@@ -3,6 +3,11 @@ run:
 
   exclude-files:
   - "zz_generated\\..+\\.go$"
+  # goverter-generated (DO NOT EDIT) converters. goverter does not run its
+  # output through goimports/gci, so the import order it emits differs from the
+  # gci sections configured below; excluding keeps `make generate` diff-clean
+  # without a lint failure on generated code.
+  - "zz_converter\\.go$"
 
 output:
   # colored-line-number|line-number|json|tab|checkstyle|code-climate, default is "colored-line-number"
